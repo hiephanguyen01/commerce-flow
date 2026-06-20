@@ -1,0 +1,28 @@
+{
+  "name": "commerce-flow",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@8.15.8",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "test:coverage": "turbo test:coverage",
+    "test:e2e": "turbo test:e2e",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:reset": "docker compose down -v",
+    "infra:logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "prettier": "latest",
+    "turbo": "latest"
+  }
+}

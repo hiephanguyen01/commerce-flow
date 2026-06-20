@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+.next/
+out/
+coverage/
+storybook-static/
+playwright-report/
+test-results/
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Prisma generated files
+apps/api/src/generated/
+
+# IDE
+.idea/
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+pnpm-debug.log*
+
+# Turborepo
+.turbo/
+
+# Docker volumes
+.docker-data/
+
+# Misc
+*.tsbuildinfo
