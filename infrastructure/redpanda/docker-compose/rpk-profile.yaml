@@ -17,7 +17,7 @@ kafka_api:
 # Configuration for connecting to the Redpanda Admin API.
 # The Admin API allows you to perform administrative tasks such as managing configurations, monitoring, and scaling.
 admin_api:
-   # List of Admin API endpoints for managing the cluster.
+  # List of Admin API endpoints for managing the cluster.
   addresses:
     - 127.0.0.1:19644 # Admin API for Broker 1: Accessible on localhost, port 19644
     - 127.0.0.1:29644 # Admin API for Broker 2: Accessible on localhost, port 29644

@@ -19,10 +19,10 @@ description: |
   - MATCH_VALUE: By default, the regex matches keys, but if set to "true", the regex matches values.
 
 # By default, no input topic is set here. (You can set it in your deploy command if preferred.)
-input-topic: ""
+input-topic: ''
 
 # By default, no output topic is set here. (You can set it in your deploy command if preferred.)
-output-topic: ""
+output-topic: ''
 
 # Indicates the specific TinyGo environment used to compile your transform.
 language: tinygo-no-goroutines

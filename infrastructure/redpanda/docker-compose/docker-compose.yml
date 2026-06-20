@@ -39,7 +39,7 @@ services:
     # Sets the username and password of the bootstrap SCRAM superuser
     # See https://docs.redpanda.com/current/deploy/deployment-option/self-hosted/manual/production/production-deployment/#bootstrap-a-user-account
     environment:
-      RP_BOOTSTRAP_USER: "superuser:secretpassword"
+      RP_BOOTSTRAP_USER: 'superuser:secretpassword'
     volumes:
       - redpanda-0:/var/lib/redpanda/data
       - ./bootstrap.yml:/etc/redpanda/.bootstrap.yaml
@@ -51,7 +51,7 @@ services:
       - 19092:19092
       - 19644:9644
     healthcheck:
-      test: ["CMD", "rpk", "cluster", "info", "-X", "user=superuser", "-X", "pass=secretpassword"]
+      test: ['CMD', 'rpk', 'cluster', 'info', '-X', 'user=superuser', '-X', 'pass=secretpassword']
       interval: 10s
       timeout: 15s
       retries: 10
@@ -76,7 +76,7 @@ services:
     image: docker.redpanda.com/redpandadata/redpanda:v26.1.10
     container_name: redpanda-1
     environment:
-      RP_BOOTSTRAP_USER: "superuser:secretpassword"
+      RP_BOOTSTRAP_USER: 'superuser:secretpassword'
     volumes:
       - redpanda-1:/var/lib/redpanda/data
       - ./bootstrap.yml:/etc/redpanda/.bootstrap.yaml
@@ -88,7 +88,7 @@ services:
       - 29092:29092
       - 29644:9644
     healthcheck:
-      test: ["CMD", "rpk", "cluster", "info", "-X", "user=superuser", "-X", "pass=secretpassword"]
+      test: ['CMD', 'rpk', 'cluster', 'info', '-X', 'user=superuser', '-X', 'pass=secretpassword']
       interval: 10s
       timeout: 15s
       retries: 10
@@ -113,7 +113,7 @@ services:
     image: docker.redpanda.com/redpandadata/redpanda:v26.1.10
     container_name: redpanda-2
     environment:
-      RP_BOOTSTRAP_USER: "superuser:secretpassword"
+      RP_BOOTSTRAP_USER: 'superuser:secretpassword'
     volumes:
       - redpanda-2:/var/lib/redpanda/data
       - ./bootstrap.yml:/etc/redpanda/.bootstrap.yaml
@@ -125,7 +125,7 @@ services:
       - 39092:39092
       - 39644:9644
     healthcheck:
-      test: ["CMD", "rpk", "cluster", "info", "-X", "user=superuser", "-X", "pass=secretpassword"]
+      test: ['CMD', 'rpk', 'cluster', 'info', '-X', 'user=superuser', '-X', 'pass=secretpassword']
       interval: 10s
       timeout: 15s
       retries: 10
@@ -378,7 +378,7 @@ services:
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: redpandaTieredStorage7
-      MINIO_SERVER_URL: "http://minio:9000"
+      MINIO_SERVER_URL: 'http://minio:9000'
       MINIO_REGION_NAME: local
       MINIO_DOMAIN: minio
     volumes:
@@ -388,7 +388,7 @@ services:
         aliases:
           - redpanda.minio
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/ready']
       interval: 10s
       timeout: 5s
       retries: 3

@@ -8,12 +8,12 @@ Each message in the `transactions` topic adheres to the following JSON schema:
 
 ```json
 {
-    "email": "string",
-    "index": "integer",
-    "price": "string",
-    "product_url": "string",
-    "timestamp": "string",
-    "user_id": "integer"
+  "email": "string",
+  "index": "integer",
+  "price": "string",
+  "product_url": "string",
+  "timestamp": "string",
+  "user_id": "integer"
 }
 ```
 
@@ -28,12 +28,12 @@ Each message in the `transactions` topic adheres to the following JSON schema:
 
 ```json
 {
-    "email": "wzieme@ykczius.edu",
-    "index": 0,
-    "price": "XXX 5651308.100000",
-    "product_url": "http://yjomdta.top/DxvGsCn.php",
-    "timestamp": "2024-08-16T15:51:19.799474084Z",
-    "user_id": 1
+  "email": "wzieme@ykczius.edu",
+  "index": 0,
+  "price": "XXX 5651308.100000",
+  "product_url": "http://yjomdta.top/DxvGsCn.php",
+  "timestamp": "2024-08-16T15:51:19.799474084Z",
+  "user_id": 1
 }
 ```
 
