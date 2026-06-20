@@ -69,7 +69,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install chromium --with-deps
+        run: pnpm --filter @commerce-flow/web exec playwright install chromium --with-deps
 
       - name: Validate Prisma schema
         run: pnpm --filter @commerce-flow/api prisma:validate
