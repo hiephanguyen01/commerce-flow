@@ -1,6 +1,8 @@
 {
   "author": "",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1073.0",
+    "@aws-sdk/s3-request-presigner": "^3.1073.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
@@ -17,6 +19,7 @@
     "class-validator": "^0.15.1",
     "helmet": "^8.2.0",
     "joi": "^18.2.3",
+    "multer": "^2.2.0",
     "nestjs-pino": "^4.6.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -37,6 +40,7 @@
     "@testcontainers/postgresql": "^12.0.3",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.1.0",
     "@types/node": "^24.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.20.0",

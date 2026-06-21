@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "product_variants" ADD COLUMN     "version" INTEGER NOT NULL DEFAULT 1;

@@ -25,4 +25,13 @@ export const environmentSchema = Joi.object({
   MINIO_ENDPOINT: Joi.string().uri().required(),
   MINIO_ACCESS_KEY: Joi.string().required(),
   MINIO_SECRET_KEY: Joi.string().required(),
+
+  MINIO_PUBLIC_URL: Joi.string().uri().required(),
+
+  MINIO_AUTO_CREATE_BUCKET: Joi.boolean().default(false),
+
+  PRODUCT_IMAGE_MAX_SIZE_BYTES: Joi.number()
+    .integer()
+    .positive()
+    .default(5 * 1024 * 1024),
 });

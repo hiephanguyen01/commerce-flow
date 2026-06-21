@@ -1,6 +1,54 @@
 {
+  "Auth": {
+    "login": {
+      "createAccount": "Create an account",
+      "description": "Enter your account information to continue using CommerceFlow.",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "customer@example.com",
+      "eyebrow": "Welcome back",
+      "hidePassword": "Hide",
+      "newUser": "New to CommerceFlow",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "showPassword": "Show",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "title": "Sign in to your account"
+    },
+    "register": {
+      "alreadyRegistered": "Already have an account?",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Enter your password again",
+      "description": "Create an account to manage orders, payments and personal information.",
+      "displayNameLabel": "Display name",
+      "displayNamePlaceholder": "John Smith",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "customer@example.com",
+      "eyebrow": "Get started",
+      "hidePassword": "Hide",
+      "login": "Sign in",
+      "passwordHint": "Your password must contain at least 10 characters.",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Create a password",
+      "showPassword": "Show",
+      "submit": "Create account",
+      "submitting": "Creating account...",
+      "title": "Create your account"
+    },
+    "validation": {
+      "confirmPasswordRequired": "Please confirm your password",
+      "displayNameTooLong": "Display name cannot exceed 120 characters",
+      "displayNameTooShort": "Display name must contain at least 2 characters",
+      "emailInvalid": "Email address is invalid",
+      "emailRequired": "Email address is required",
+      "passwordRequired": "Password is required",
+      "passwordTooLong": "Password cannot exceed 128 characters",
+      "passwordTooShort": "Password must contain at least 10 characters",
+      "passwordsDoNotMatch": "Passwords do not match"
+    }
+  },
   "HomePage": {
-    "title": "CommerceFlow",
-    "description": "Professional commerce platform"
+    "description": "Professional commerce platform",
+    "title": "CommerceFlow"
   }
 }

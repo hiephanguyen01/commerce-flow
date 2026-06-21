@@ -1,4 +1,52 @@
 {
+  "Auth": {
+    "login": {
+      "createAccount": "Tạo tài khoản mới",
+      "description": "Nhập thông tin tài khoản để tiếp tục sử dụng CommerceFlow.",
+      "emailLabel": "Địa chỉ email",
+      "emailPlaceholder": "customer@example.com",
+      "eyebrow": "Chào mừng trở lại",
+      "hidePassword": "Ẩn",
+      "newUser": "Chưa có tài khoản",
+      "passwordLabel": "Mật khẩu",
+      "passwordPlaceholder": "Nhập mật khẩu",
+      "showPassword": "Hiện",
+      "submit": "Đăng nhập",
+      "submitting": "Đang đăng nhập...",
+      "title": "Đăng nhập tài khoản"
+    },
+    "register": {
+      "alreadyRegistered": "Đã có tài khoản?",
+      "confirmPasswordLabel": "Xác nhận mật khẩu",
+      "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+      "description": "Tạo tài khoản để quản lý đơn hàng, thanh toán và thông tin cá nhân.",
+      "displayNameLabel": "Tên hiển thị",
+      "displayNamePlaceholder": "Nguyễn Văn A",
+      "emailLabel": "Địa chỉ email",
+      "emailPlaceholder": "customer@example.com",
+      "eyebrow": "Bắt đầu sử dụng",
+      "hidePassword": "Ẩn",
+      "login": "Đăng nhập",
+      "passwordHint": "Mật khẩu phải có ít nhất 10 ký tự.",
+      "passwordLabel": "Mật khẩu",
+      "passwordPlaceholder": "Tạo mật khẩu",
+      "showPassword": "Hiện",
+      "submit": "Tạo tài khoản",
+      "submitting": "Đang tạo tài khoản...",
+      "title": "Tạo tài khoản"
+    },
+    "validation": {
+      "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
+      "displayNameTooLong": "Tên hiển thị không được vượt quá 120 ký tự",
+      "displayNameTooShort": "Tên hiển thị phải có ít nhất 2 ký tự",
+      "emailInvalid": "Địa chỉ email không hợp lệ",
+      "emailRequired": "Vui lòng nhập địa chỉ email",
+      "passwordRequired": "Vui lòng nhập mật khẩu",
+      "passwordTooLong": "Mật khẩu không được vượt quá 128 ký tự",
+      "passwordTooShort": "Mật khẩu phải có ít nhất 10 ký tự",
+      "passwordsDoNotMatch": "Mật khẩu xác nhận không khớp"
+    }
+  },
   "HomePage": {
     "description": "Nền tảng thương mại điện tử chuyên nghiệp",
     "title": "CommerceFlow"

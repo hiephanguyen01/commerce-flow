@@ -7,6 +7,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { environmentSchema } from './config/environment.schema.js';
 import { PrismaModule } from './infrastructure/database/prisma.module.js';
+import { CatalogModule } from './modules/catalog/catalog.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { IdentityModule } from './modules/identity/identity.module.js';
 
@@ -58,6 +59,7 @@ import { IdentityModule } from './modules/identity/identity.module.js';
         },
       ],
     }),
+    CatalogModule,
     IdentityModule,
     PrismaModule,
     HealthModule,

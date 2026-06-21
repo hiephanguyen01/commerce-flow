@@ -111,3 +111,105 @@ model AuthAuditLog {
   @@index([action, createdAt])
   @@map("auth_audit_logs")
 }
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProductVariantStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Category {
+  id          String   @id @default(uuid()) @db.Uuid
+  parentId    String?  @map("parent_id") @db.Uuid
+  name        String   @db.VarChar(160)
+  slug        String   @unique @db.VarChar(180)
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children Category[] @relation("CategoryTree")
+
+  products Product[]
+
+  @@index([parentId])
+  @@index([isActive, sortOrder])
+  @@map("categories")
+}
+
+model Product {
+  id               String        @id @default(uuid()) @db.Uuid
+  categoryId       String?       @map("category_id") @db.Uuid
+  name             String        @db.VarChar(200)
+  slug             String        @unique @db.VarChar(220)
+  shortDescription String?       @map("short_description") @db.VarChar(500)
+  description      String?       @db.Text
+  status           ProductStatus @default(DRAFT)
+  publishedAt      DateTime?     @map("published_at")
+  archivedAt       DateTime?     @map("archived_at")
+  version          Int           @default(1)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  category Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  variants ProductVariant[]
+  images   ProductImage[]
+
+  @@index([categoryId])
+  @@index([status, createdAt])
+  @@index([status, publishedAt])
+  @@index([name])
+  @@map("products")
+}
+
+model ProductVariant {
+  id             String               @id @default(uuid()) @db.Uuid
+  productId      String               @map("product_id") @db.Uuid
+  name           String               @db.VarChar(160)
+  sku            String               @unique @db.VarChar(80)
+  priceAmount    Int                  @map("price_amount")
+  compareAtPrice Int?                 @map("compare_at_price")
+  currency       String               @default("VND") @db.Char(3)
+  status         ProductVariantStatus @default(ACTIVE)
+  attributes     Json?
+  sortOrder      Int                  @default(0) @map("sort_order")
+  version        Int                  @default(1)
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, status])
+  @@index([productId, sortOrder])
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id          String   @id @default(uuid()) @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  objectKey   String   @unique @map("object_key") @db.VarChar(500)
+  publicUrl   String   @map("public_url") @db.VarChar(1000)
+  contentType String   @map("content_type") @db.VarChar(100)
+  sizeBytes   Int      @map("size_bytes")
+  etag        String?  @map("etag") @db.VarChar(100)
+  altText     String?  @map("alt_text") @db.VarChar(250)
+  isPrimary   Boolean  @default(false) @map("is_primary")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@index([productId, isPrimary])
+  @@map("product_images")
+}
+
+
