@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NextFunction, Request, Response } from 'express';
+import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from './app.module.js';
@@ -15,6 +16,7 @@ async function bootstrap(): Promise<void> {
   const configService = app.get(ConfigService);
   const logger = app.get(Logger);
 
+  app.use(helmet());
   app.useLogger(logger);
   app.enableShutdownHooks();
 
@@ -45,7 +47,6 @@ async function bootstrap(): Promise<void> {
 
     next();
   });
-
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
