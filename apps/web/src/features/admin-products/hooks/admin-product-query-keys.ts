@@ -1,5 +1,4 @@
-// placeholder
-import type { AdminProductFilters } from '../types/admin-product';
+import { AdminProductFilters } from '../types/admin-product';
 
 export const adminProductQueryKeys = {
   all: ['admin-products'] as const,
@@ -11,6 +10,8 @@ export const adminProductQueryKeys = {
   details: () => [...adminProductQueryKeys.all, 'detail'] as const,
 
   detail: (productId: string) => [...adminProductQueryKeys.details(), productId] as const,
+
+  images: (productId: string) => [...adminProductQueryKeys.detail(productId), 'images'] as const,
 
   categories: () => ['admin-categories'] as const,
 };

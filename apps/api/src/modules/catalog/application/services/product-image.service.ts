@@ -105,10 +105,15 @@ export class ProductImageService {
     return this.prisma.productImage.findMany({
       where: { productId },
       orderBy: [
-        { isPrimary: 'desc' },
-        { sortOrder: 'asc' },
-        { createdAt: 'asc' },
-        { id: 'asc' },
+        {
+          sortOrder: 'asc',
+        },
+        {
+          createdAt: 'asc',
+        },
+        {
+          id: 'asc',
+        },
       ],
       select: this.getImageSelect(),
     });
@@ -229,9 +234,15 @@ export class ProductImageService {
           const images = await tx.productImage.findMany({
             where: { productId },
             orderBy: [
-              { isPrimary: 'desc' },
-              { sortOrder: 'asc' },
-              { id: 'asc' },
+              {
+                sortOrder: 'asc',
+              },
+              {
+                createdAt: 'asc',
+              },
+              {
+                id: 'asc',
+              },
             ],
             select: this.getImageSelect(),
           });

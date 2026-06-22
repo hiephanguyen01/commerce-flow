@@ -1,21 +1,29 @@
 'use client';
 
+import { useState } from 'react';
 import { useAdminProduct } from '../hooks/use-admin-product';
 import { ProductForm } from './product-form';
+import { ProductImageEditor } from './product-image-editor';
 import { ProductStatusBadge } from './product-status-badge';
+import { ProductVariantEditor } from './product-variant-editor';
 
 type ProductEditorProps = {
   locale: string;
   productId: string;
 };
 
+type ProductEditorTab = 'information' | 'variants' | 'images';
+
 export function ProductEditor({ locale, productId }: ProductEditorProps) {
+  const [activeTab, setActiveTab] = useState<ProductEditorTab>('information');
+
   const productQuery = useAdminProduct(productId);
 
   if (productQuery.isPending) {
     return (
       <div className="space-y-4">
         <div className="h-20 animate-pulse rounded-2xl bg-slate-200" />
+
         <div className="h-96 animate-pulse rounded-2xl bg-slate-200" />
       </div>
     );
@@ -35,36 +43,92 @@ export function ProductEditor({ locale, productId }: ProductEditorProps) {
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">{product.name}</h1>
 
             <ProductStatusBadge status={product.status} />
           </div>
 
-          <p className="mt-2 text-sm text-slate-500">Version {product.version}</p>
+          <p className="mt-2 text-sm text-slate-500">Product version {product.version}</p>
         </div>
       </div>
 
-      <nav className="mt-7 flex gap-2 border-b border-slate-200">
-        <button
-          type="button"
-          className="border-b-2 border-indigo-600 px-4 py-3 text-sm font-semibold text-indigo-600"
+      <nav
+        aria-label="Product editor"
+        className="mt-7 flex overflow-x-auto border-b border-slate-200"
+      >
+        <TabButton
+          active={activeTab === 'information'}
+          onClick={() => {
+            setActiveTab('information');
+          }}
         >
           Thông tin
-        </button>
+        </TabButton>
 
-        <button type="button" disabled className="px-4 py-3 text-sm text-slate-400">
+        <TabButton
+          active={activeTab === 'variants'}
+          onClick={() => {
+            setActiveTab('variants');
+          }}
+        >
           Biến thể ({product.variants.length})
-        </button>
+        </TabButton>
 
-        <button type="button" disabled className="px-4 py-3 text-sm text-slate-400">
+        <TabButton
+          active={activeTab === 'images'}
+          onClick={() => {
+            setActiveTab('images');
+          }}
+        >
           Hình ảnh ({product.images.length})
-        </button>
+        </TabButton>
       </nav>
 
       <div className="mt-7">
-        <ProductForm key={`${product.id}:${product.version}`} locale={locale} product={product} />
+        <div className="mt-7">
+          {activeTab === 'information' ? (
+            <ProductForm
+              key={`${product.id}:${product.version}`}
+              locale={locale}
+              product={product}
+            />
+          ) : null}
+
+          {activeTab === 'variants' ? <ProductVariantEditor product={product} /> : null}
+
+          {activeTab === 'images' ? <ProductImageEditor product={product} /> : null}
+        </div>
+
+        {activeTab === 'variants' ? <ProductVariantEditor product={product} /> : null}
+
+        {activeTab === 'images' ? <ProductImageEditor product={product} /> : null}
       </div>
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition',
+        active
+          ? 'border-indigo-600 text-indigo-600'
+          : 'border-transparent text-slate-500 hover:text-slate-950',
+      ].join(' ')}
+    >
+      {children}
+    </button>
   );
 }
