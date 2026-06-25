@@ -28,7 +28,7 @@ export type AdminProductListItem = {
 
   category: AdminProductCategory | null;
 
-  images: AdminProductImage[];
+  images: AdminProductImageSummary[];
 
   variants: AdminProductVariantSummary[];
 
@@ -52,7 +52,7 @@ export type AdminProductDetail = {
   createdAt: string;
   updatedAt: string;
   category: AdminProductCategory | null;
-  images: AdminProductImage[];
+  images: AdminProductImageSummary[];
 
   variants: Array<{
     id: string;

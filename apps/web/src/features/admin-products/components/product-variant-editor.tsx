@@ -1,6 +1,7 @@
 'use client';
 
 import { parseApiError } from '@/lib/http/api-error';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import {
   useActivateProductVariant,
@@ -15,7 +16,12 @@ type ProductVariantEditorProps = {
   product: AdminProductDetail;
 };
 
+type ProductsTranslator = ReturnType<typeof useTranslations>;
+
 export function ProductVariantEditor({ product }: ProductVariantEditorProps) {
+  const t = useTranslations('Admin.products');
+  const locale = useLocale();
+
   const [creating, setCreating] = useState(false);
 
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
@@ -67,7 +73,9 @@ export function ProductVariantEditor({ product }: ProductVariantEditorProps) {
 
   async function handleDelete(variant: AdminProductVariant): Promise<void> {
     const confirmed = window.confirm(
-      `Xóa biến thể "${variant.name}"? Thao tác này không thể hoàn tác.`,
+      t('confirmDeleteVariant', {
+        name: variant.name,
+      }),
     );
 
     if (!confirmed) {
@@ -89,11 +97,9 @@ export function ProductVariantEditor({ product }: ProductVariantEditorProps) {
     <section>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-950">Biến thể sản phẩm</h2>
+          <h2 className="text-xl font-semibold text-slate-950">{t('variantSectionTitle')}</h2>
 
-          <p className="mt-2 text-sm text-slate-500">
-            Quản lý SKU, giá bán, thuộc tính và trạng thái biến thể.
-          </p>
+          <p className="mt-2 text-sm text-slate-500">{t('variantSectionDescription')}</p>
         </div>
 
         {!archived ? (
@@ -107,14 +113,14 @@ export function ProductVariantEditor({ product }: ProductVariantEditorProps) {
             disabled={creating || editingVariantId !== null}
             className="h-11 rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white disabled:opacity-50"
           >
-            Thêm biến thể
+            {t('addVariant')}
           </button>
         ) : null}
       </div>
 
       {archived ? (
         <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          Sản phẩm đã được lưu trữ. Không thể thay đổi biến thể.
+          {t('archivedVariantNotice')}
         </div>
       ) : null}
 
@@ -123,7 +129,7 @@ export function ProductVariantEditor({ product }: ProductVariantEditorProps) {
           role="alert"
           className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
         >
-          {getActionErrorMessage(actionError.code, actionError.message)}
+          {getActionErrorMessage(actionError.code, actionError.message, t)}
         </div>
       ) : null}
 
@@ -144,11 +150,9 @@ export function ProductVariantEditor({ product }: ProductVariantEditorProps) {
       <div className="mt-6 space-y-4">
         {product.variants.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
-            <h3 className="font-semibold text-slate-950">Chưa có biến thể</h3>
+            <h3 className="font-semibold text-slate-950">{t('noVariantsTitle')}</h3>
 
-            <p className="mt-2 text-sm text-slate-500">
-              Product cần ít nhất một active variant trước khi publish.
-            </p>
+            <p className="mt-2 text-sm text-slate-500">{t('noVariantsDescription')}</p>
           </div>
         ) : (
           product.variants.map((variant) => {
@@ -191,6 +195,8 @@ export function ProductVariantEditor({ product }: ProductVariantEditorProps) {
                 onDelete={() => {
                   void handleDelete(variant);
                 }}
+                locale={locale}
+                t={t}
               />
             );
           })
@@ -208,6 +214,8 @@ function VariantCard({
   onActivate,
   onDeactivate,
   onDelete,
+  locale,
+  t,
 }: {
   product: AdminProductDetail;
   variant: AdminProductVariant;
@@ -216,6 +224,8 @@ function VariantCard({
   onActivate: () => void;
   onDeactivate: () => void;
   onDelete: () => void;
+  locale: string;
+  t: ProductsTranslator;
 }) {
   const active = variant.status === 'ACTIVE';
 
@@ -230,19 +240,23 @@ function VariantCard({
 
             <VariantStatusBadge status={variant.status} />
 
-            <span className="text-xs text-slate-400">Version {variant.version}</span>
+            <span className="text-xs text-slate-400">
+              {t('variantVersion', {
+                version: variant.version,
+              })}
+            </span>
           </div>
 
           <p className="mt-2 font-mono text-sm text-slate-500">{variant.sku}</p>
 
           <div className="mt-4 flex flex-wrap items-baseline gap-3">
             <span className="text-lg font-semibold text-slate-950">
-              {formatVnd(variant.priceAmount)}
+              {formatVnd(variant.priceAmount, locale)}
             </span>
 
             {variant.compareAtPrice !== null ? (
               <span className="text-sm text-slate-400 line-through">
-                {formatVnd(variant.compareAtPrice)}
+                {formatVnd(variant.compareAtPrice, locale)}
               </span>
             ) : null}
           </div>
@@ -259,7 +273,11 @@ function VariantCard({
             </dl>
           ) : null}
 
-          <p className="mt-4 text-xs text-slate-400">Thứ tự: {variant.sortOrder}</p>
+          <p className="mt-4 text-xs text-slate-400">
+            {t('sortOrder', {
+              sortOrder: variant.sortOrder,
+            })}
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -269,7 +287,7 @@ function VariantCard({
             disabled={disabled}
             className={secondaryButtonClass}
           >
-            Chỉnh sửa
+            {t('edit')}
           </button>
 
           {active ? (
@@ -279,7 +297,7 @@ function VariantCard({
               disabled={disabled}
               className={secondaryButtonClass}
             >
-              Ngừng hoạt động
+              {t('deactivate')}
             </button>
           ) : (
             <button
@@ -288,7 +306,7 @@ function VariantCard({
               disabled={disabled}
               className={secondaryButtonClass}
             >
-              Kích hoạt
+              {t('activate')}
             </button>
           )}
 
@@ -298,12 +316,12 @@ function VariantCard({
             disabled={disabled || cannotDeleteActivePublished}
             title={
               cannotDeleteActivePublished
-                ? 'Hãy deactivate variant trước khi xóa khỏi product đã publish'
+                ? t('deactivateBeforeDeleteTitle')
                 : undefined
             }
             className="h-10 rounded-lg border border-red-200 px-4 text-sm font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Xóa
+            {t('delete')}
           </button>
         </div>
       </div>
@@ -311,27 +329,31 @@ function VariantCard({
   );
 }
 
-function formatVnd(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', {
+function formatVnd(amount: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'VND',
     maximumFractionDigits: 0,
   }).format(amount);
 }
 
-function getActionErrorMessage(code: string, fallback: string): string {
+function getActionErrorMessage(
+  code: string,
+  fallback: string,
+  t: ProductsTranslator,
+): string {
   switch (code) {
     case 'PUBLISHED_PRODUCT_REQUIRES_ACTIVE_VARIANT':
-      return 'Sản phẩm đã publish phải giữ lại ít nhất một active variant.';
+      return t('publishedProductRequiresActiveVariant');
 
     case 'ACTIVE_PUBLISHED_VARIANT_CANNOT_BE_DELETED':
-      return 'Hãy ngừng hoạt động variant trước khi xóa khỏi sản phẩm đã publish.';
+      return t('activePublishedVariantCannotBeDeleted');
 
     case 'PRODUCT_VARIANT_VERSION_CONFLICT':
-      return 'Variant đã được thay đổi bởi yêu cầu khác. Hãy tải lại dữ liệu.';
+      return t('variantConflict');
 
     case 'PRODUCT_VARIANT_STATUS_CONFLICT':
-      return 'Trạng thái variant đã thay đổi. Dữ liệu mới nhất đang được tải lại.';
+      return t('variantStatusConflict');
 
     default:
       return fallback;

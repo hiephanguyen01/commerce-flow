@@ -1,4 +1,5 @@
 import { ProductEditor } from '@/features/admin-products/components/product-editor';
+import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 type ProductDetailPageProps = {
@@ -10,6 +11,7 @@ type ProductDetailPageProps = {
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { locale, productId } = await params;
+  const t = await getTranslations('Admin.products');
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -17,7 +19,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         href={`/${locale}/admin/products`}
         className="text-sm font-medium text-slate-500 hover:text-slate-950"
       >
-        ← Quay lại danh sách
+        {t('backToList')}
       </Link>
 
       <div className="mt-5">

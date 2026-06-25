@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAdminProducts } from '../hooks/use-admin-products';
 import type { AdminProductFilters, ProductStatus } from '../types/admin-product';
@@ -11,6 +12,8 @@ type AdminProductListProps = {
 };
 
 export function AdminProductList({ locale }: AdminProductListProps) {
+  const t = useTranslations('Admin.products');
+  const statusT = useTranslations('Admin.productStatus');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -51,20 +54,20 @@ export function AdminProductList({ locale }: AdminProductListProps) {
     <div>
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-indigo-600">Catalog</p>
+          <p className="text-sm font-medium text-indigo-600">{t('eyebrow')}</p>
 
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Sản phẩm</h1>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">
+            {t('title')}
+          </h1>
 
-          <p className="mt-2 text-sm text-slate-500">
-            Quản lý thông tin, biến thể, hình ảnh và trạng thái sản phẩm.
-          </p>
+          <p className="mt-2 text-sm text-slate-500">{t('description')}</p>
         </div>
 
         <Link
           href={`/${locale}/admin/products/new`}
           className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
-          Tạo sản phẩm
+          {t('create')}
         </Link>
       </div>
 
@@ -72,7 +75,7 @@ export function AdminProductList({ locale }: AdminProductListProps) {
         <input
           type="search"
           defaultValue={filters.search ?? ''}
-          placeholder="Tìm tên, slug hoặc SKU..."
+          placeholder={t('searchPlaceholder')}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               updateFilter('search', event.currentTarget.value.trim());
@@ -88,10 +91,10 @@ export function AdminProductList({ locale }: AdminProductListProps) {
           }}
           className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm"
         >
-          <option value="">Mọi trạng thái</option>
-          <option value="DRAFT">Bản nháp</option>
-          <option value="PUBLISHED">Đã xuất bản</option>
-          <option value="ARCHIVED">Đã lưu trữ</option>
+          <option value="">{t('allStatuses')}</option>
+          <option value="DRAFT">{statusT('DRAFT')}</option>
+          <option value="PUBLISHED">{statusT('PUBLISHED')}</option>
+          <option value="ARCHIVED">{statusT('ARCHIVED')}</option>
         </select>
 
         <select
@@ -101,10 +104,10 @@ export function AdminProductList({ locale }: AdminProductListProps) {
           }}
           className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm"
         >
-          <option value="newest">Mới nhất</option>
-          <option value="updated_desc">Mới cập nhật</option>
-          <option value="name_asc">Tên A–Z</option>
-          <option value="name_desc">Tên Z–A</option>
+          <option value="newest">{t('sortNewest')}</option>
+          <option value="updated_desc">{t('sortRecentlyUpdated')}</option>
+          <option value="name_asc">{t('sortNameAsc')}</option>
+          <option value="name_desc">{t('sortNameDesc')}</option>
         </select>
       </div>
 
@@ -116,7 +119,7 @@ export function AdminProductList({ locale }: AdminProductListProps) {
             role="alert"
             className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700"
           >
-            Không thể tải danh sách sản phẩm.
+            {t('loadError')}
           </div>
         ) : (
           <ProductTable locale={locale} products={data?.items ?? []} />
@@ -126,7 +129,10 @@ export function AdminProductList({ locale }: AdminProductListProps) {
       {data && data.pagination.totalPages > 1 ? (
         <div className="mt-6 flex items-center justify-between">
           <p className="text-sm text-slate-500">
-            Trang {data.pagination.page}/{data.pagination.totalPages}
+            {t('pageInfo', {
+              page: data.pagination.page,
+              totalPages: data.pagination.totalPages,
+            })}
           </p>
 
           <div className="flex gap-2">
@@ -138,7 +144,7 @@ export function AdminProductList({ locale }: AdminProductListProps) {
               }}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm disabled:opacity-40"
             >
-              Trước
+              {t('previous')}
             </button>
 
             <button
@@ -149,7 +155,7 @@ export function AdminProductList({ locale }: AdminProductListProps) {
               }}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm disabled:opacity-40"
             >
-              Sau
+              {t('next')}
             </button>
           </div>
         </div>

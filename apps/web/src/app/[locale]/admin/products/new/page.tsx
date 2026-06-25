@@ -1,4 +1,5 @@
 import { ProductForm } from '@/features/admin-products/components/product-form';
+import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 type NewProductPageProps = {
@@ -9,6 +10,7 @@ type NewProductPageProps = {
 
 export default async function NewProductPage({ params }: NewProductPageProps) {
   const { locale } = await params;
+  const t = await getTranslations('Admin.products');
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -16,17 +18,17 @@ export default async function NewProductPage({ params }: NewProductPageProps) {
         href={`/${locale}/admin/products`}
         className="text-sm font-medium text-slate-500 hover:text-slate-950"
       >
-        ← Quay lại danh sách
+        {t('backToList')}
       </Link>
 
       <div className="mt-5">
-        <p className="text-sm font-medium text-indigo-600">Catalog</p>
+        <p className="text-sm font-medium text-indigo-600">{t('eyebrow')}</p>
 
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Tạo sản phẩm</h1>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">
+          {t('newTitle')}
+        </h1>
 
-        <p className="mt-2 text-sm text-slate-500">
-          Sản phẩm mới sẽ được tạo ở trạng thái bản nháp.
-        </p>
+        <p className="mt-2 text-sm text-slate-500">{t('newDescription')}</p>
       </div>
 
       <div className="mt-8">

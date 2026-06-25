@@ -1,31 +1,27 @@
 import { z } from 'zod';
 
-export const productFormSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, 'Tên sản phẩm phải có ít nhất 2 ký tự')
-    .max(200, 'Tên sản phẩm không được vượt quá 200 ký tự'),
+type TranslationFunction = (key: string) => string;
 
-  slug: z
-    .string()
-    .trim()
-    .min(2, 'Slug là bắt buộc')
-    .max(220)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug chỉ gồm chữ thường, số và dấu gạch ngang'),
+export function createProductFormSchema(t: TranslationFunction) {
+  return z.object({
+    name: z.string().trim().min(2, t('nameTooShort')).max(200, t('nameTooLong')),
 
-  categoryId: z.string().optional(),
+    slug: z
+      .string()
+      .trim()
+      .min(2, t('slugRequired'))
+      .max(220)
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, t('slugInvalid')),
 
-  shortDescription: z
-    .string()
-    .trim()
-    .max(500, 'Mô tả ngắn không được vượt quá 500 ký tự')
-    .optional(),
+    categoryId: z.string().optional(),
 
-  description: z.string().trim().max(20_000, 'Mô tả không được vượt quá 20.000 ký tự').optional(),
-});
+    shortDescription: z.string().trim().max(500, t('shortDescriptionTooLong')).optional(),
 
-export type ProductFormValues = z.infer<typeof productFormSchema>;
+    description: z.string().trim().max(20_000, t('descriptionTooLong')).optional(),
+  });
+}
+
+export type ProductFormValues = z.infer<ReturnType<typeof createProductFormSchema>>;
 
 export function toProductPayload(values: ProductFormValues) {
   return {

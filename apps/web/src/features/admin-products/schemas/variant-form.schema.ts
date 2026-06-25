@@ -1,71 +1,74 @@
 import { z } from 'zod';
 
-const moneySchema = z
-  .string()
-  .trim()
-  .min(1, 'Giá bán là bắt buộc')
-  .regex(/^\d+$/, 'Giá bán phải là số nguyên');
+type TranslationFunction = (key: string) => string;
 
-const optionalMoneySchema = z
-  .string()
-  .trim()
-  .refine((value) => value === '' || /^\d+$/.test(value), {
-    message: 'Giá so sánh phải là số nguyên',
+function createMoneySchema(t: TranslationFunction) {
+  return z.string().trim().min(1, t('priceRequired')).regex(/^\d+$/, t('priceInteger'));
+}
+
+function createOptionalMoneySchema(t: TranslationFunction) {
+  return z
+    .string()
+    .trim()
+    .refine((value) => value === '' || /^\d+$/.test(value), {
+      message: t('compareAtPriceInteger'),
+    });
+}
+
+function createAttributeSchema(t: TranslationFunction) {
+  return z.object({
+    key: z.string().trim().min(1, t('attributeKeyRequired')).max(80),
+
+    value: z.string().trim().min(1, t('attributeValueRequired')).max(160),
   });
+}
 
-const attributeSchema = z.object({
-  key: z.string().trim().min(1, 'Tên thuộc tính là bắt buộc').max(80),
+export function createVariantFormSchema(t: TranslationFunction) {
+  return z
+    .object({
+      name: z.string().trim().min(1, t('variantNameRequired')).max(160),
 
-  value: z.string().trim().min(1, 'Giá trị thuộc tính là bắt buộc').max(160),
-});
+      sku: z
+        .string()
+        .trim()
+        .min(2, t('skuTooShort'))
+        .max(80)
+        .regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/, t('skuInvalid')),
 
-export const variantFormSchema = z
-  .object({
-    name: z.string().trim().min(1, 'Tên biến thể là bắt buộc').max(160),
+      priceAmount: createMoneySchema(t),
 
-    sku: z
-      .string()
-      .trim()
-      .min(2, 'SKU phải có ít nhất 2 ký tự')
-      .max(80)
-      .regex(
-        /^[A-Za-z0-9][A-Za-z0-9._-]*$/,
-        'SKU chỉ gồm chữ, số, dấu chấm, gạch dưới và gạch ngang',
-      ),
+      compareAtPrice: createOptionalMoneySchema(t),
 
-    priceAmount: moneySchema,
+      attributes: z.array(createAttributeSchema(t)).max(20, t('attributesTooMany')),
 
-    compareAtPrice: optionalMoneySchema,
+      sortOrder: z.number().int().min(0),
+    })
+    .superRefine((value, context) => {
+      const priceAmount = Number(value.priceAmount);
 
-    attributes: z.array(attributeSchema).max(20, 'Tối đa 20 thuộc tính'),
+      const compareAtPrice = value.compareAtPrice === '' ? null : Number(value.compareAtPrice);
 
-    sortOrder: z.number().int().min(0),
-  })
-  .superRefine((value, context) => {
-    const priceAmount = Number(value.priceAmount);
+      if (compareAtPrice !== null && compareAtPrice < priceAmount) {
+        context.addIssue({
+          code: 'custom',
+          path: ['compareAtPrice'],
+          message: t('compareAtPriceTooLow'),
+        });
+      }
 
-    const compareAtPrice = value.compareAtPrice === '' ? null : Number(value.compareAtPrice);
+      const normalizedKeys = value.attributes.map((attribute) => attribute.key.trim().toLowerCase());
 
-    if (compareAtPrice !== null && compareAtPrice < priceAmount) {
-      context.addIssue({
-        code: 'custom',
-        path: ['compareAtPrice'],
-        message: 'Giá so sánh không được thấp hơn giá bán',
-      });
-    }
+      if (new Set(normalizedKeys).size !== normalizedKeys.length) {
+        context.addIssue({
+          code: 'custom',
+          path: ['attributes'],
+          message: t('duplicateAttributeKeys'),
+        });
+      }
+    });
+}
 
-    const normalizedKeys = value.attributes.map((attribute) => attribute.key.trim().toLowerCase());
-
-    if (new Set(normalizedKeys).size !== normalizedKeys.length) {
-      context.addIssue({
-        code: 'custom',
-        path: ['attributes'],
-        message: 'Tên thuộc tính không được trùng nhau',
-      });
-    }
-  });
-
-export type VariantFormValues = z.infer<typeof variantFormSchema>;
+export type VariantFormValues = z.infer<ReturnType<typeof createVariantFormSchema>>;
 
 export type VariantPayload = {
   name: string;

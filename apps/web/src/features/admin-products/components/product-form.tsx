@@ -3,14 +3,15 @@
 
 import { parseApiError } from '@/lib/http/api-error';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAdminCategories } from '../hooks/use-admin-product';
 import { useCreateProduct } from '../hooks/use-create-product';
 import { useUpdateProduct } from '../hooks/use-update-product';
 import {
   createSlug,
-  productFormSchema,
+  createProductFormSchema,
   toProductPayload,
   type ProductFormValues,
 } from '../schemas/product-form.schema';
@@ -22,6 +23,8 @@ type ProductFormProps = {
 };
 
 export function ProductForm({ locale, product }: ProductFormProps) {
+  const t = useTranslations('Admin.products');
+  const validationT = useTranslations('Admin.productValidation');
   const editing = Boolean(product);
 
   const [slugEdited, setSlugEdited] = useState(editing);
@@ -32,8 +35,10 @@ export function ProductForm({ locale, product }: ProductFormProps) {
 
   const updateMutation = useUpdateProduct();
 
+  const schema = useMemo(() => createProductFormSchema(validationT), [validationT]);
+
   const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productFormSchema),
+    resolver: zodResolver(schema),
 
     mode: 'onTouched',
 
@@ -90,17 +95,17 @@ export function ProductForm({ locale, product }: ProductFormProps) {
         <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4">
           <p className="text-sm font-medium text-red-800">
             {apiError.code === 'PRODUCT_VERSION_CONFLICT'
-              ? 'Sản phẩm đã được thay đổi bởi một yêu cầu khác. Hãy tải lại trang.'
+              ? t('versionConflict')
               : apiError.message}
           </p>
         </div>
       ) : null}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-950">Thông tin cơ bản</h2>
+        <h2 className="text-lg font-semibold text-slate-950">{t('basicInfo')}</h2>
 
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
-          <Field label="Tên sản phẩm" error={form.formState.errors.name?.message}>
+          <Field label={t('nameLabel')} error={form.formState.errors.name?.message}>
             <input {...form.register('name')} className={inputClass} placeholder="iPhone 16 Pro" />
           </Field>
 
@@ -116,13 +121,13 @@ export function ProductForm({ locale, product }: ProductFormProps) {
             />
           </Field>
 
-          <Field label="Danh mục">
+          <Field label={t('categoryLabel')}>
             <select
               {...form.register('categoryId')}
               className={inputClass}
               disabled={categoriesQuery.isPending}
             >
-              <option value="">Không thuộc danh mục</option>
+              <option value="">{t('noCategory')}</option>
 
               {categoriesQuery.data?.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -135,23 +140,26 @@ export function ProductForm({ locale, product }: ProductFormProps) {
           <div />
 
           <div className="sm:col-span-2">
-            <Field label="Mô tả ngắn" error={form.formState.errors.shortDescription?.message}>
+            <Field
+              label={t('shortDescriptionLabel')}
+              error={form.formState.errors.shortDescription?.message}
+            >
               <textarea
                 {...form.register('shortDescription')}
                 rows={3}
                 className={inputClass}
-                placeholder="Mô tả ngắn xuất hiện trên danh sách sản phẩm"
+                placeholder={t('shortDescriptionPlaceholder')}
               />
             </Field>
           </div>
 
           <div className="sm:col-span-2">
-            <Field label="Mô tả chi tiết" error={form.formState.errors.description?.message}>
+            <Field label={t('descriptionLabel')} error={form.formState.errors.description?.message}>
               <textarea
                 {...form.register('description')}
                 rows={10}
                 className={inputClass}
-                placeholder="Thông tin chi tiết sản phẩm"
+                placeholder={t('descriptionPlaceholder')}
               />
             </Field>
           </div>
@@ -164,7 +172,7 @@ export function ProductForm({ locale, product }: ProductFormProps) {
           disabled={mutation.isPending}
           className="inline-flex h-11 min-w-36 items-center justify-center rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {mutation.isPending ? 'Đang lưu...' : editing ? 'Lưu thay đổi' : 'Tạo sản phẩm'}
+          {mutation.isPending ? t('saving') : editing ? t('saveChanges') : t('create')}
         </button>
       </div>
     </form>

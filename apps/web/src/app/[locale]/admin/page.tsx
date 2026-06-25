@@ -1,4 +1,5 @@
 // placeholder
+import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 type AdminPageProps = {
@@ -9,25 +10,24 @@ type AdminPageProps = {
 
 export default async function AdminPage({ params }: AdminPageProps) {
   const { locale } = await params;
+  const t = await getTranslations('Admin.dashboard');
 
   return (
     <div>
-      <p className="text-sm font-medium text-indigo-600">Dashboard</p>
+      <p className="text-sm font-medium text-indigo-600">{t('eyebrow')}</p>
 
-      <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">
-        Quản trị CommerceFlow
-      </h1>
+      <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">{t('title')}</h1>
 
       <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <DashboardCard
-          title="Sản phẩm"
-          description="Quản lý catalog, biến thể và hình ảnh."
+          title={t('productsTitle')}
+          description={t('productsDescription')}
           href={`/${locale}/admin/products`}
         />
 
         <DashboardCard
-          title="Danh mục"
-          description="Quản lý cây danh mục sản phẩm."
+          title={t('categoriesTitle')}
+          description={t('categoriesDescription')}
           href={`/${locale}/admin/categories`}
         />
       </div>

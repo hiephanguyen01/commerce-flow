@@ -2,6 +2,8 @@
 
 import { parseApiError } from '@/lib/http/api-error';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import {
   useCreateProductVariant,
@@ -9,10 +11,10 @@ import {
 } from '../hooks/use-product-variant-mutations';
 import {
   formatMoneyInput,
+  createVariantFormSchema,
   normalizeMoneyDigits,
   toVariantPayload,
   variantAttributesToForm,
-  variantFormSchema,
   type VariantFormValues,
 } from '../schemas/variant-form.schema';
 import type { AdminProductVariant } from '../types/admin-product';
@@ -32,14 +34,18 @@ export function VariantForm({
   onCancel,
   onSaved,
 }: VariantFormProps) {
+  const t = useTranslations('Admin.products');
+  const validationT = useTranslations('Admin.variantValidation');
   const editing = Boolean(variant);
 
   const createMutation = useCreateProductVariant(productId);
 
   const updateMutation = useUpdateProductVariant(productId);
 
+  const schema = useMemo(() => createVariantFormSchema(validationT), [validationT]);
+
   const form = useForm<VariantFormValues>({
-    resolver: zodResolver(variantFormSchema),
+    resolver: zodResolver(schema),
 
     mode: 'onTouched',
 
@@ -102,13 +108,19 @@ export function VariantForm({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-slate-950">
-            {editing ? 'Chỉnh sửa biến thể' : 'Tạo biến thể'}
+            {editing ? t('editVariant') : t('createVariant')}
           </h3>
 
-          <p className="mt-1 text-sm text-slate-500">Giá được lưu dưới dạng số nguyên VND.</p>
+          <p className="mt-1 text-sm text-slate-500">{t('variantPriceHint')}</p>
         </div>
 
-        {variant ? <span className="text-xs text-slate-500">Version {variant.version}</span> : null}
+        {variant ? (
+          <span className="text-xs text-slate-500">
+            {t('variantVersion', {
+              version: variant.version,
+            })}
+          </span>
+        ) : null}
       </div>
 
       {parsedError ? (
@@ -116,12 +128,12 @@ export function VariantForm({
           role="alert"
           className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
         >
-          {getVariantErrorMessage(parsedError.code, parsedError.message)}
+          {getVariantErrorMessage(parsedError.code, parsedError.message, t)}
         </div>
       ) : null}
 
       <div className="mt-5 grid gap-5 sm:grid-cols-2">
-        <Field label="Tên biến thể" error={form.formState.errors.name?.message}>
+        <Field label={t('variantNameLabel')} error={form.formState.errors.name?.message}>
           <input
             {...form.register('name')}
             className={inputClass}
@@ -143,7 +155,7 @@ export function VariantForm({
           />
         </Field>
 
-        <Field label="Giá bán" error={form.formState.errors.priceAmount?.message}>
+        <Field label={t('priceLabel')} error={form.formState.errors.priceAmount?.message}>
           <Controller
             control={form.control}
             name="priceAmount"
@@ -169,7 +181,7 @@ export function VariantForm({
           />
         </Field>
 
-        <Field label="Giá so sánh" error={form.formState.errors.compareAtPrice?.message}>
+        <Field label={t('compareAtPriceLabel')} error={form.formState.errors.compareAtPrice?.message}>
           <Controller
             control={form.control}
             name="compareAtPrice"
@@ -195,7 +207,7 @@ export function VariantForm({
           />
         </Field>
 
-        <Field label="Thứ tự" error={form.formState.errors.sortOrder?.message}>
+        <Field label={t('sortOrderLabel')} error={form.formState.errors.sortOrder?.message}>
           <input
             {...form.register('sortOrder', {
               valueAsNumber: true,
@@ -211,9 +223,9 @@ export function VariantForm({
       <div className="mt-7 border-t border-slate-200 pt-5">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-semibold text-slate-950">Thuộc tính</h4>
+            <h4 className="text-sm font-semibold text-slate-950">{t('attributesTitle')}</h4>
 
-            <p className="mt-1 text-xs text-slate-500">Ví dụ: color, storage, size.</p>
+            <p className="mt-1 text-xs text-slate-500">{t('attributesHint')}</p>
           </div>
 
           <button
@@ -227,7 +239,7 @@ export function VariantForm({
             disabled={disabled}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
           >
-            Thêm thuộc tính
+            {t('addAttribute')}
           </button>
         </div>
 
@@ -262,7 +274,7 @@ export function VariantForm({
                 disabled={disabled}
                 className="h-11 rounded-xl border border-red-200 px-4 text-sm font-medium text-red-600 disabled:opacity-50"
               >
-                Xóa
+                {t('delete')}
               </button>
 
               {form.formState.errors.attributes?.[index]?.key?.message ? (
@@ -281,7 +293,7 @@ export function VariantForm({
 
           {attributes.fields.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">
-              Biến thể chưa có thuộc tính.
+              {t('noAttributes')}
             </p>
           ) : null}
         </div>
@@ -294,7 +306,7 @@ export function VariantForm({
           disabled={mutation.isPending}
           className="h-11 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 disabled:opacity-50"
         >
-          Hủy
+          {t('cancel')}
         </button>
 
         <button
@@ -302,7 +314,7 @@ export function VariantForm({
           disabled={disabled || mutation.isPending}
           className="h-11 rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {mutation.isPending ? 'Đang lưu...' : editing ? 'Lưu biến thể' : 'Tạo biến thể'}
+          {mutation.isPending ? t('saving') : editing ? t('saveVariant') : t('createVariant')}
         </button>
       </div>
     </form>
@@ -333,19 +345,21 @@ function Field({
   );
 }
 
-function getVariantErrorMessage(code: string, fallback: string): string {
+type ProductsTranslator = ReturnType<typeof useTranslations>;
+
+function getVariantErrorMessage(code: string, fallback: string, t: ProductsTranslator): string {
   switch (code) {
     case 'VARIANT_SKU_ALREADY_EXISTS':
-      return 'SKU này đã được sử dụng.';
+      return t('skuAlreadyExists');
 
     case 'VARIANT_VERSION_CONFLICT':
-      return 'Biến thể đã được thay đổi bởi một yêu cầu khác. Hãy tải lại dữ liệu.';
+      return t('variantConflict');
 
     case 'ARCHIVED_PRODUCT_CANNOT_BE_MODIFIED':
-      return 'Không thể thay đổi biến thể của sản phẩm đã lưu trữ.';
+      return t('archivedVariantError');
 
     case 'INVALID_COMPARE_AT_PRICE':
-      return 'Giá so sánh không được thấp hơn giá bán.';
+      return t('invalidCompareAtPrice');
 
     default:
       return fallback;

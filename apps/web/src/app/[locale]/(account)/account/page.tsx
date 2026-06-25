@@ -1,10 +1,14 @@
 'use client';
 
+import { LanguageSwitcher } from '@/components/shared/language-switcher';
 import { LogoutButton } from '@/features/authentication/components/logout-button';
 import { useCurrentUser } from '@/features/authentication/hooks/use-current-user';
+import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 
 export default function AccountPage() {
+  const t = useTranslations('Account');
+
   const params = useParams<{
     locale: string;
   }>();
@@ -16,7 +20,7 @@ export default function AccountPage() {
       <main className="flex min-h-dvh items-center justify-center bg-slate-50">
         <div className="flex items-center gap-3 text-sm text-slate-600">
           <span className="size-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900" />
-          Đang tải tài khoản...
+          {t('loading')}
         </div>
       </main>
     );
@@ -26,7 +30,7 @@ export default function AccountPage() {
     return (
       <main className="flex min-h-dvh items-center justify-center bg-slate-50 px-5">
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
-          Không thể tải thông tin tài khoản.
+          {t('loadError')}
         </div>
       </main>
     );
@@ -44,7 +48,7 @@ export default function AccountPage() {
             </div>
 
             <div>
-              <p className="text-sm text-slate-500">Đã đăng nhập với</p>
+              <p className="text-sm text-slate-500">{t('signedInWith')}</p>
 
               <h1 className="text-xl font-semibold text-slate-950">
                 {user.displayName ?? user.email}
@@ -54,13 +58,17 @@ export default function AccountPage() {
             </div>
           </div>
 
-          <LogoutButton locale={params.locale} />
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+
+            <LogoutButton locale={params.locale} />
+          </div>
         </header>
 
         <section className="mt-6 grid gap-4 sm:grid-cols-2">
-          <AccountItem label="User ID" value={user.id} />
+          <AccountItem label={t('userId')} value={user.id} />
 
-          <AccountItem label="Role" value={user.role} />
+          <AccountItem label={t('role')} value={user.role} />
         </section>
       </div>
     </main>

@@ -1,4 +1,5 @@
 // placeholder
+import { useTranslations } from 'next-intl';
 import type { ProductStatus } from '../types/admin-product';
 
 type ProductStatusBadgeProps = {
@@ -7,28 +8,25 @@ type ProductStatusBadgeProps = {
 
 const statusConfig = {
   DRAFT: {
-    label: 'Bản nháp',
     className: 'bg-amber-50 text-amber-700 ring-amber-600/20',
   },
 
   PUBLISHED: {
-    label: 'Đã xuất bản',
     className: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
   },
 
   ARCHIVED: {
-    label: 'Đã lưu trữ',
     className: 'bg-slate-100 text-slate-600 ring-slate-500/20',
   },
 } satisfies Record<
   ProductStatus,
   {
-    label: string;
     className: string;
   }
 >;
 
 export function ProductStatusBadge({ status }: ProductStatusBadgeProps) {
+  const t = useTranslations('Admin.productStatus');
   const config = statusConfig[status];
 
   return (
@@ -38,7 +36,7 @@ export function ProductStatusBadge({ status }: ProductStatusBadgeProps) {
         config.className,
       ].join(' ')}
     >
-      {config.label}
+      {t(status)}
     </span>
   );
 }

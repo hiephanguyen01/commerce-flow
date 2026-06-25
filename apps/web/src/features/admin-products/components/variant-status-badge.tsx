@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import type { ProductVariantStatus } from '../types/admin-product';
 
 type VariantStatusBadgeProps = {
@@ -5,6 +6,7 @@ type VariantStatusBadgeProps = {
 };
 
 export function VariantStatusBadge({ status }: VariantStatusBadgeProps) {
+  const t = useTranslations('Admin.variantStatus');
   const active = status === 'ACTIVE';
 
   return (
@@ -16,7 +18,7 @@ export function VariantStatusBadge({ status }: VariantStatusBadgeProps) {
           : 'bg-slate-100 text-slate-600 ring-slate-500/20',
       ].join(' ')}
     >
-      {active ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+      {t(status)}
     </span>
   );
 }

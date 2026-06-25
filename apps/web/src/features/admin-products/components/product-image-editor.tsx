@@ -18,6 +18,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   useDeleteProductImage,
@@ -37,7 +38,11 @@ type ProductImageEditorProps = {
   product: AdminProductDetail;
 };
 
+type ProductsTranslator = ReturnType<typeof useTranslations>;
+
 export function ProductImageEditor({ product }: ProductImageEditorProps) {
+  const t = useTranslations('Admin.products');
+
   const imagesQuery = useProductImages(product.id);
 
   const uploadMutation = useUploadProductImage(product.id);
@@ -159,7 +164,11 @@ export function ProductImageEditor({ product }: ProductImageEditorProps) {
   }
 
   async function handleDelete(image: AdminProductImage): Promise<void> {
-    const confirmed = window.confirm(`Xóa ảnh "${image.altText ?? image.id}"?`);
+    const confirmed = window.confirm(
+      t('confirmDeleteImage', {
+        name: image.altText ?? image.id,
+      }),
+    );
 
     if (!confirmed) {
       return;
@@ -179,16 +188,14 @@ export function ProductImageEditor({ product }: ProductImageEditorProps) {
   return (
     <section>
       <div>
-        <h2 className="text-xl font-semibold text-slate-950">Hình ảnh sản phẩm</h2>
+        <h2 className="text-xl font-semibold text-slate-950">{t('imageSectionTitle')}</h2>
 
-        <p className="mt-2 text-sm text-slate-500">
-          Upload, đặt ảnh đại diện, cập nhật alt text và kéo thả để thay đổi thứ tự.
-        </p>
+        <p className="mt-2 text-sm text-slate-500">{t('imageSectionDescription')}</p>
       </div>
 
       {archived ? (
         <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          Sản phẩm đã được lưu trữ. Không thể thay đổi hình ảnh.
+          {t('archivedImageNotice')}
         </div>
       ) : (
         <div className="mt-6">
@@ -196,6 +203,7 @@ export function ProductImageEditor({ product }: ProductImageEditorProps) {
             disabled={busy}
             nextSortOrder={images.length}
             expectedProductVersion={product.version}
+            t={t}
             onUpload={async (input) => {
               await uploadMutation.mutateAsync(input);
             }}
@@ -208,7 +216,7 @@ export function ProductImageEditor({ product }: ProductImageEditorProps) {
           role="alert"
           className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
         >
-          {getImageErrorMessage(parsedError.code, parsedError.message)}
+          {getImageErrorMessage(parsedError.code, parsedError.message, t)}
         </div>
       ) : null}
 
@@ -220,15 +228,13 @@ export function ProductImageEditor({ product }: ProductImageEditorProps) {
             role="alert"
             className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700"
           >
-            Không thể tải hình ảnh sản phẩm.
+            {t('imageLoadError')}
           </div>
         ) : orderedImages.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-            <h3 className="font-semibold text-slate-950">Chưa có hình ảnh</h3>
+            <h3 className="font-semibold text-slate-950">{t('noImagesTitle')}</h3>
 
-            <p className="mt-2 text-sm text-slate-500">
-              Upload ảnh đầu tiên cho sản phẩm. Ảnh đầu tiên sẽ tự động trở thành primary.
-            </p>
+            <p className="mt-2 text-sm text-slate-500">{t('noImagesDescription')}</p>
           </div>
         ) : (
           <DndContext
@@ -257,6 +263,7 @@ export function ProductImageEditor({ product }: ProductImageEditorProps) {
                     onDelete={() => {
                       void handleDelete(image);
                     }}
+                    t={t}
                   />
                 ))}
               </div>
@@ -281,11 +288,13 @@ function ImageUploadPanel({
   disabled,
   nextSortOrder,
   expectedProductVersion,
+  t,
   onUpload,
 }: {
   disabled: boolean;
   nextSortOrder: number;
   expectedProductVersion: number;
+  t: ProductsTranslator;
   onUpload: (input: UploadInput) => Promise<void>;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -328,7 +337,7 @@ function ImageUploadPanel({
       setFile(null);
       setPreviewUrl(null);
 
-      setValidationError('Chỉ hỗ trợ JPEG, PNG và WebP.');
+      setValidationError(t('imageTypeUnsupported'));
 
       return;
     }
@@ -337,7 +346,7 @@ function ImageUploadPanel({
       setFile(null);
       setPreviewUrl(null);
 
-      setValidationError('Dung lượng ảnh không được vượt quá 5 MB.');
+      setValidationError(t('imageTooLarge'));
 
       return;
     }
@@ -351,7 +360,7 @@ function ImageUploadPanel({
     event.preventDefault();
 
     if (!file) {
-      setValidationError('Hãy chọn một ảnh.');
+      setValidationError(t('imageRequired'));
 
       return;
     }
@@ -401,12 +410,12 @@ function ImageUploadPanel({
       <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
         <label className="flex min-h-52 cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-slate-50">
           {previewUrl ? (
-            <img src={previewUrl} alt="Image preview" className="size-full object-cover" />
+            <img src={previewUrl} alt={t('imagePreviewAlt')} className="size-full object-cover" />
           ) : (
             <div className="px-5 text-center">
-              <p className="text-sm font-semibold text-slate-700">Chọn hình ảnh</p>
+              <p className="text-sm font-semibold text-slate-700">{t('selectImage')}</p>
 
-              <p className="mt-2 text-xs text-slate-500">JPEG, PNG hoặc WebP, tối đa 5 MB</p>
+              <p className="mt-2 text-xs text-slate-500">{t('imageRequirements')}</p>
             </div>
           )}
 
@@ -433,7 +442,7 @@ function ImageUploadPanel({
               onChange={(event) => {
                 setAltText(event.target.value);
               }}
-              placeholder="Mô tả nội dung hình ảnh"
+              placeholder={t('altTextPlaceholder')}
               className={inputClass}
             />
           </label>
@@ -449,7 +458,7 @@ function ImageUploadPanel({
               className="size-4 rounded border-slate-300"
             />
 
-            <span className="text-sm text-slate-700">Đặt làm ảnh primary</span>
+            <span className="text-sm text-slate-700">{t('setPrimaryCheckbox')}</span>
           </label>
 
           {validationError ? (
@@ -461,7 +470,7 @@ function ImageUploadPanel({
           {progress > 0 ? (
             <div className="mt-5">
               <div className="flex justify-between text-xs text-slate-500">
-                <span>Đang upload</span>
+                <span>{t('uploading')}</span>
 
                 <span>{progress}%</span>
               </div>
@@ -482,7 +491,7 @@ function ImageUploadPanel({
             disabled={disabled || !file}
             className="mt-6 h-11 rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Upload hình ảnh
+            {t('uploadImage')}
           </button>
         </div>
       </div>
@@ -496,12 +505,14 @@ function SortableImageCard({
   onSetPrimary,
   onUpdateAltText,
   onDelete,
+  t,
 }: {
   image: AdminProductImage;
   disabled: boolean;
   onSetPrimary: () => void;
   onUpdateAltText: (altText: string | null) => void;
   onDelete: () => void;
+  t: ProductsTranslator;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: image.id,
@@ -531,19 +542,19 @@ function SortableImageCard({
       <div className="relative aspect-square bg-slate-100">
         <img
           src={image.publicUrl}
-          alt={image.altText ?? 'Product image'}
+          alt={image.altText ?? t('productImageAlt')}
           className="size-full object-cover"
         />
 
         {image.isPrimary ? (
           <span className="absolute left-3 top-3 rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold text-white">
-            Primary
+            {t('primary')}
           </span>
         ) : null}
 
         <button
           type="button"
-          aria-label="Kéo để sắp xếp ảnh"
+          aria-label={t('dragImageAria')}
           disabled={disabled}
           {...attributes}
           {...listeners}
@@ -580,7 +591,7 @@ function SortableImageCard({
                 }}
                 className={smallPrimaryButton}
               >
-                Lưu
+                {t('save')}
               </button>
 
               <button
@@ -592,21 +603,25 @@ function SortableImageCard({
                 }}
                 className={smallButton}
               >
-                Hủy
+                {t('cancel')}
               </button>
             </div>
           </div>
         ) : (
           <>
             <p className="truncate text-sm font-medium text-slate-800">
-              {image.altText || 'Chưa có alt text'}
+              {image.altText || t('noAltText')}
             </p>
 
             <p className="mt-1 text-xs text-slate-500">
               {formatFileSize(image.sizeBytes)} · {image.contentType}
             </p>
 
-            <p className="mt-1 text-xs text-slate-400">Thứ tự: {image.sortOrder}</p>
+            <p className="mt-1 text-xs text-slate-400">
+              {t('sortOrder', {
+                sortOrder: image.sortOrder,
+              })}
+            </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
               <button
@@ -627,7 +642,7 @@ function SortableImageCard({
                   onClick={onSetPrimary}
                   className={smallButton}
                 >
-                  Đặt primary
+                  {t('setPrimary')}
                 </button>
               ) : null}
 
@@ -637,7 +652,7 @@ function SortableImageCard({
                 onClick={onDelete}
                 className="h-9 rounded-lg border border-red-200 px-3 text-xs font-semibold text-red-600 disabled:opacity-50"
               >
-                Xóa
+                {t('delete')}
               </button>
             </div>
           </>
@@ -671,28 +686,28 @@ function formatFileSize(sizeBytes: number): string {
   return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function getImageErrorMessage(code: string, fallback: string): string {
+function getImageErrorMessage(code: string, fallback: string, t: ProductsTranslator): string {
   switch (code) {
     case 'PRODUCT_VERSION_CONFLICT':
-      return 'Sản phẩm đã được thay đổi bởi một yêu cầu khác. Hãy tải lại dữ liệu.';
+      return t('productVersionConflictReload');
 
     case 'PRODUCT_IMAGE_FILE_TOO_LARGE':
-      return 'Dung lượng ảnh không được vượt quá 5 MB.';
+      return t('imageTooLarge');
 
     case 'PRODUCT_IMAGE_TYPE_NOT_SUPPORTED':
-      return 'Chỉ hỗ trợ ảnh JPEG, PNG và WebP.';
+      return t('imageTypeUnsupported');
 
     case 'PRODUCT_IMAGE_CONTENT_TYPE_MISMATCH':
-      return 'Nội dung file không khớp với loại ảnh được khai báo.';
+      return t('imageContentTypeMismatch');
 
     case 'PRODUCT_IMAGE_STORAGE_UPLOAD_FAILED':
-      return 'Không thể upload ảnh lên hệ thống lưu trữ.';
+      return t('imageStorageUploadFailed');
 
     case 'ARCHIVED_PRODUCT_CANNOT_BE_MODIFIED':
-      return 'Không thể thay đổi ảnh của sản phẩm đã lưu trữ.';
+      return t('archivedImageError');
 
     case 'PRODUCT_IMAGE_CONCURRENT_UPDATE':
-      return 'Danh sách ảnh đã được thay đổi bởi yêu cầu khác. Hãy tải lại.';
+      return t('imageConcurrentUpdate');
 
     default:
       return fallback;

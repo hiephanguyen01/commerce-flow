@@ -1,5 +1,7 @@
+import { LanguageSwitcher } from '@/components/shared/language-switcher';
 import { LogoutButton } from '@/features/authentication/components/logout-button';
 import type { RequiredAdminUser } from '@/lib/auth/require-admin';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
@@ -10,17 +12,19 @@ type AdminShellProps = {
 };
 
 export function AdminShell({ locale, user, children }: AdminShellProps) {
+  const t = useTranslations('Admin.shell');
+
   const navigation = [
     {
-      label: 'Tổng quan',
+      label: t('overview'),
       href: `/${locale}/admin`,
     },
     {
-      label: 'Sản phẩm',
+      label: t('products'),
       href: `/${locale}/admin/products`,
     },
     {
-      label: 'Danh mục',
+      label: t('categories'),
       href: `/${locale}/admin/categories`,
     },
   ];
@@ -56,10 +60,14 @@ export function AdminShell({ locale, user, children }: AdminShellProps) {
           <div>
             <p className="text-sm font-medium text-slate-950">{user.displayName ?? user.email}</p>
 
-            <p className="text-xs text-slate-500">Quản trị viên</p>
+            <p className="text-xs text-slate-500">{t('role')}</p>
           </div>
 
-          <LogoutButton locale={locale} />
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+
+            <LogoutButton locale={locale} />
+          </div>
         </header>
 
         <div className="px-5 py-8 sm:px-8">{children}</div>

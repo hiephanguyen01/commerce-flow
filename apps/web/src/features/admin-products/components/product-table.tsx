@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { AdminProductListItem } from '../types/admin-product';
 import { ProductStatusBadge } from './product-status-badge';
@@ -10,12 +11,15 @@ type ProductTableProps = {
 };
 
 export function ProductTable({ locale, products }: ProductTableProps) {
+  const t = useTranslations('Admin.products');
+  const currentLocale = useLocale();
+
   if (products.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-        <h2 className="font-semibold text-slate-950">Không tìm thấy sản phẩm</h2>
+        <h2 className="font-semibold text-slate-950">{t('emptyTitle')}</h2>
 
-        <p className="mt-2 text-sm text-slate-500">Thay đổi bộ lọc hoặc tạo sản phẩm đầu tiên.</p>
+        <p className="mt-2 text-sm text-slate-500">{t('emptyDescription')}</p>
       </div>
     );
   }
@@ -26,18 +30,18 @@ export function ProductTable({ locale, products }: ProductTableProps) {
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
-              <TableHeader>Sản phẩm</TableHeader>
+              <TableHeader>{t('productColumn')}</TableHeader>
 
-              <TableHeader>Trạng thái</TableHeader>
+              <TableHeader>{t('statusColumn')}</TableHeader>
 
-              <TableHeader>Giá thấp nhất</TableHeader>
+              <TableHeader>{t('lowestPriceColumn')}</TableHeader>
 
-              <TableHeader>Biến thể</TableHeader>
+              <TableHeader>{t('variantsColumn')}</TableHeader>
 
-              <TableHeader>Cập nhật</TableHeader>
+              <TableHeader>{t('updatedColumn')}</TableHeader>
 
               <TableHeader>
-                <span className="sr-only">Thao tác</span>
+                <span className="sr-only">{t('actionsColumn')}</span>
               </TableHeader>
             </tr>
           </thead>
@@ -62,7 +66,7 @@ export function ProductTable({ locale, products }: ProductTableProps) {
                             className="size-full object-cover"
                           />
                         ) : (
-                          <span className="text-xs text-slate-400">No image</span>
+                          <span className="text-xs text-slate-400">{t('noImage')}</span>
                         )}
                       </div>
 
@@ -83,7 +87,9 @@ export function ProductTable({ locale, products }: ProductTableProps) {
                   </td>
 
                   <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-700">
-                    {variant ? formatPrice(variant.priceAmount, variant.currency) : 'Chưa có giá'}
+                    {variant
+                      ? formatPrice(variant.priceAmount, variant.currency, currentLocale)
+                      : t('noPrice')}
                   </td>
 
                   <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
@@ -91,7 +97,7 @@ export function ProductTable({ locale, products }: ProductTableProps) {
                   </td>
 
                   <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-500">
-                    {new Intl.DateTimeFormat('vi-VN', {
+                    {new Intl.DateTimeFormat(currentLocale, {
                       dateStyle: 'short',
                       timeStyle: 'short',
                     }).format(new Date(product.updatedAt))}
@@ -102,7 +108,7 @@ export function ProductTable({ locale, products }: ProductTableProps) {
                       href={`/${locale}/admin/products/${product.id}`}
                       className="text-sm font-semibold text-indigo-600 hover:text-indigo-500"
                     >
-                      Chỉnh sửa
+                      {t('edit')}
                     </Link>
                   </td>
                 </tr>
@@ -126,8 +132,8 @@ function TableHeader({ children }: { children: React.ReactNode }) {
   );
 }
 
-function formatPrice(amount: number, currency: string): string {
-  return new Intl.NumberFormat('vi-VN', {
+function formatPrice(amount: number, currency: string, locale: string): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
     maximumFractionDigits: 0,

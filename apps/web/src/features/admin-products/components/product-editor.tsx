@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useAdminProduct } from '../hooks/use-admin-product';
 import { ProductForm } from './product-form';
@@ -15,6 +16,7 @@ type ProductEditorProps = {
 type ProductEditorTab = 'information' | 'variants' | 'images';
 
 export function ProductEditor({ locale, productId }: ProductEditorProps) {
+  const t = useTranslations('Admin.products');
   const [activeTab, setActiveTab] = useState<ProductEditorTab>('information');
 
   const productQuery = useAdminProduct(productId);
@@ -32,7 +34,7 @@ export function ProductEditor({ locale, productId }: ProductEditorProps) {
   if (productQuery.isError || !productQuery.data) {
     return (
       <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
-        Không thể tải sản phẩm.
+        {t('detailLoadError')}
       </div>
     );
   }
@@ -49,12 +51,16 @@ export function ProductEditor({ locale, productId }: ProductEditorProps) {
             <ProductStatusBadge status={product.status} />
           </div>
 
-          <p className="mt-2 text-sm text-slate-500">Product version {product.version}</p>
+          <p className="mt-2 text-sm text-slate-500">
+            {t('version', {
+              version: product.version,
+            })}
+          </p>
         </div>
       </div>
 
       <nav
-        aria-label="Product editor"
+        aria-label={t('editorAriaLabel')}
         className="mt-7 flex overflow-x-auto border-b border-slate-200"
       >
         <TabButton
@@ -63,7 +69,7 @@ export function ProductEditor({ locale, productId }: ProductEditorProps) {
             setActiveTab('information');
           }}
         >
-          Thông tin
+          {t('informationTab')}
         </TabButton>
 
         <TabButton
@@ -72,7 +78,9 @@ export function ProductEditor({ locale, productId }: ProductEditorProps) {
             setActiveTab('variants');
           }}
         >
-          Biến thể ({product.variants.length})
+          {t('variantsTab', {
+            count: product.variants.length,
+          })}
         </TabButton>
 
         <TabButton
@@ -81,7 +89,9 @@ export function ProductEditor({ locale, productId }: ProductEditorProps) {
             setActiveTab('images');
           }}
         >
-          Hình ảnh ({product.images.length})
+          {t('imagesTab', {
+            count: product.images.length,
+          })}
         </TabButton>
       </nav>
 
@@ -99,10 +109,6 @@ export function ProductEditor({ locale, productId }: ProductEditorProps) {
 
           {activeTab === 'images' ? <ProductImageEditor product={product} /> : null}
         </div>
-
-        {activeTab === 'variants' ? <ProductVariantEditor product={product} /> : null}
-
-        {activeTab === 'images' ? <ProductImageEditor product={product} /> : null}
       </div>
     </div>
   );

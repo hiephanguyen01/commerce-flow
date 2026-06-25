@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useLogout } from '../hooks/use-logout';
 
 type LogoutButtonProps = {
@@ -7,6 +8,8 @@ type LogoutButtonProps = {
 };
 
 export function LogoutButton({ locale }: LogoutButtonProps) {
+  const t = useTranslations('Common');
+
   const logoutMutation = useLogout({
     redirectPath: `/${locale}/login`,
   });
@@ -20,7 +23,7 @@ export function LogoutButton({ locale }: LogoutButtonProps) {
       }}
       className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {logoutMutation.isPending ? 'Đang đăng xuất...' : 'Đăng xuất'}
+      {logoutMutation.isPending ? t('loggingOut') : t('logout')}
     </button>
   );
 }

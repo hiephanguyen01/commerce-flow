@@ -17,6 +17,7 @@ type LoginFormProps = {
 
 export function LoginForm({ locale }: LoginFormProps) {
   const t = useTranslations('Auth.login');
+  
   const validationT = useTranslations('Auth.validation');
 
   const schema = useMemo(() => createLoginSchema(validationT), [validationT]);
