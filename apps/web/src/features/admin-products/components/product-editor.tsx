@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useAdminProduct } from '../hooks/use-admin-product';
 import { ProductForm } from './product-form';
 import { ProductImageEditor } from './product-image-editor';
+import { ProductLifecyclePanel } from './product-lifecycle-panel';
 import { ProductStatusBadge } from './product-status-badge';
 import { ProductVariantEditor } from './product-variant-editor';
 
@@ -51,18 +52,31 @@ export function ProductEditor({ locale, productId }: ProductEditorProps) {
             <ProductStatusBadge status={product.status} />
           </div>
 
-          <p className="mt-2 text-sm text-slate-500">
-            {t('version', {
-              version: product.version,
-            })}
-          </p>
+          <p className="mt-2 text-sm text-slate-500">Product version {product.version}</p>
+
+          {product.publishedAt ? (
+            <p className="mt-1 text-xs text-slate-400">
+              Published: {formatDateTime(product.publishedAt)}
+            </p>
+          ) : null}
+
+          {product.archivedAt ? (
+            <p className="mt-1 text-xs text-slate-400">
+              Archived: {formatDateTime(product.archivedAt)}
+            </p>
+          ) : null}
         </div>
       </div>
 
+      <div className="mt-7">
+        <ProductLifecyclePanel product={product} />
+      </div>
+
       <nav
-        aria-label={t('editorAriaLabel')}
+        aria-label="Product editor"
         className="mt-7 flex overflow-x-auto border-b border-slate-200"
       >
+        {/* tabs */}
         <TabButton
           active={activeTab === 'information'}
           onClick={() => {
@@ -102,6 +116,7 @@ export function ProductEditor({ locale, productId }: ProductEditorProps) {
               key={`${product.id}:${product.version}`}
               locale={locale}
               product={product}
+              disabled={product.status === 'ARCHIVED'}
             />
           ) : null}
 
@@ -112,6 +127,13 @@ export function ProductEditor({ locale, productId }: ProductEditorProps) {
       </div>
     </div>
   );
+}
+
+function formatDateTime(value: string): string {
+  return new Intl.DateTimeFormat('vi-VN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
 }
 
 function TabButton({

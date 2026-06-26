@@ -10,8 +10,8 @@ import { useAdminCategories } from '../hooks/use-admin-product';
 import { useCreateProduct } from '../hooks/use-create-product';
 import { useUpdateProduct } from '../hooks/use-update-product';
 import {
-  createSlug,
   createProductFormSchema,
+  createSlug,
   toProductPayload,
   type ProductFormValues,
 } from '../schemas/product-form.schema';
@@ -20,9 +20,10 @@ import type { AdminProductDetail } from '../types/admin-product';
 type ProductFormProps = {
   locale: string;
   product?: AdminProductDetail;
+  disabled?: boolean;
 };
 
-export function ProductForm({ locale, product }: ProductFormProps) {
+export function ProductForm({ locale, product, disabled = false }: ProductFormProps) {
   const t = useTranslations('Admin.products');
   const validationT = useTranslations('Admin.productValidation');
   const editing = Boolean(product);
@@ -94,9 +95,7 @@ export function ProductForm({ locale, product }: ProductFormProps) {
       {apiError ? (
         <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4">
           <p className="text-sm font-medium text-red-800">
-            {apiError.code === 'PRODUCT_VERSION_CONFLICT'
-              ? t('versionConflict')
-              : apiError.message}
+            {apiError.code === 'PRODUCT_VERSION_CONFLICT' ? t('versionConflict') : apiError.message}
           </p>
         </div>
       ) : null}
@@ -106,11 +105,17 @@ export function ProductForm({ locale, product }: ProductFormProps) {
 
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
           <Field label={t('nameLabel')} error={form.formState.errors.name?.message}>
-            <input {...form.register('name')} className={inputClass} placeholder="iPhone 16 Pro" />
+            <input
+              {...form.register('name')}
+              disabled={disabled}
+              className={inputClass}
+              placeholder="iPhone 16 Pro"
+            />
           </Field>
 
           <Field label="Slug" error={form.formState.errors.slug?.message}>
             <input
+              disabled={disabled}
               {...form.register('slug', {
                 onChange: () => {
                   setSlugEdited(true);
@@ -123,9 +128,9 @@ export function ProductForm({ locale, product }: ProductFormProps) {
 
           <Field label={t('categoryLabel')}>
             <select
+              disabled={disabled || categoriesQuery.isPending}
               {...form.register('categoryId')}
               className={inputClass}
-              disabled={categoriesQuery.isPending}
             >
               <option value="">{t('noCategory')}</option>
 
@@ -145,6 +150,7 @@ export function ProductForm({ locale, product }: ProductFormProps) {
               error={form.formState.errors.shortDescription?.message}
             >
               <textarea
+                disabled={disabled}
                 {...form.register('shortDescription')}
                 rows={3}
                 className={inputClass}
@@ -156,6 +162,7 @@ export function ProductForm({ locale, product }: ProductFormProps) {
           <div className="sm:col-span-2">
             <Field label={t('descriptionLabel')} error={form.formState.errors.description?.message}>
               <textarea
+                disabled={disabled}
                 {...form.register('description')}
                 rows={10}
                 className={inputClass}
@@ -167,12 +174,14 @@ export function ProductForm({ locale, product }: ProductFormProps) {
       </section>
 
       <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={mutation.isPending}
-          className="inline-flex h-11 min-w-36 items-center justify-center rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {mutation.isPending ? t('saving') : editing ? t('saveChanges') : t('create')}
+        <button type="submit" disabled={disabled || mutation.isPending}>
+          {disabled
+            ? 'Sản phẩm đã lưu trữ'
+            : mutation.isPending
+              ? 'Đang lưu...'
+              : editing
+                ? 'Lưu thay đổi'
+                : 'Tạo sản phẩm'}
         </button>
       </div>
     </form>

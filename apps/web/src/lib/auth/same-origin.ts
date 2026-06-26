@@ -5,5 +5,7 @@ export function isSameOrigin(request: Request): boolean {
     return true;
   }
 
-  return origin === process.env.APP_URL;
+  const appUrl = process.env.APP_URL;
+
+  return origin === appUrl;
 }

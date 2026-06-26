@@ -8,8 +8,8 @@ type CreateServerApiOptions = {
 };
 
 export function createServerApi(options: CreateServerApiOptions = {}): AxiosInstance {
-  const apiInternalUrl = process.env.API_INTERNAL_URL;
-
+  const apiInternalUrl = process.env.API_INTERNAL_URL || 'http://localhost:4000';
+ 
   if (!apiInternalUrl) {
     throw new Error('API_INTERNAL_URL is not configured');
   }
