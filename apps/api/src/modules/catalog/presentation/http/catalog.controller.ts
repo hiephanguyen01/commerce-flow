@@ -31,7 +31,7 @@ export class CatalogController {
     @Query()
     query: PublicProductQueryDto,
   ) {
-    return this.productService.findPublishedProducts(query);
+    return this.productService.findPublicProducts(query);
   }
 
   @Get('products/:slug')
@@ -42,6 +42,6 @@ export class CatalogController {
     @Param('slug')
     slug: string,
   ) {
-    return this.productService.findPublishedProductBySlug(slug);
+    return this.productService.findPublicProductBySlug(slug);
   }
 }

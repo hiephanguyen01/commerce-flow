@@ -52,6 +52,7 @@ export function ProductForm({ locale, product, disabled = false }: ProductFormPr
     },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const name = form.watch('name');
 
   useEffect(() => {

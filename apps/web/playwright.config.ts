@@ -23,9 +23,12 @@ export default defineConfig({
     {
       command: 'pnpm --filter @commerce-flow/api start:test',
 
-      url: 'http://localhost:4000/api/v1/health',
+      url: 'http://localhost:4000/api/v1/health/ready',
 
       reuseExistingServer: !process.env.CI,
+
+      stdout: 'pipe',
+      stderr: 'pipe',
 
       timeout: 120_000,
     },
@@ -36,6 +39,9 @@ export default defineConfig({
       url: 'http://localhost:3000/vi/products',
 
       reuseExistingServer: !process.env.CI,
+
+      stdout: 'pipe',
+      stderr: 'pipe',
 
       timeout: 120_000,
     },

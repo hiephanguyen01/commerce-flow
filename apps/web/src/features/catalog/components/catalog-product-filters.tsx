@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import type { PublicCategoryTreeNode, PublicProductSort } from '../types/catalog';
 type CategoryOption = PublicCategoryTreeNode & { depth: number };
 type CatalogProductFiltersProps = {
@@ -24,10 +24,13 @@ export function CatalogProductFilters({
   onSortChange,
   onReset,
 }: CatalogProductFiltersProps) {
+  const [prevSearch, setPrevSearch] = useState(search);
   const [searchValue, setSearchValue] = useState(search);
-  useEffect(() => {
+
+  if (search !== prevSearch) {
+    setPrevSearch(search);
     setSearchValue(search);
-  }, [search]);
+  }
   function handleSubmit(event: FormEvent): void {
     event.preventDefault();
     onSearch(searchValue);

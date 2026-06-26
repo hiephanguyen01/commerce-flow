@@ -1,5 +1,6 @@
 import { CatalogProductBrowser } from '@/features/catalog/components/catalog-product-browser';
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'Sản phẩm | CommerceFlow',
@@ -16,5 +17,9 @@ type ProductsPageProps = {
 export default async function ProductsPage({ params }: ProductsPageProps) {
   const { locale } = await params;
 
-  return <CatalogProductBrowser locale={locale} />;
+  return (
+    <Suspense fallback={<div>Đang tải sản phẩm...</div>}>
+      <CatalogProductBrowser locale={locale} />
+    </Suspense>
+  );
 }

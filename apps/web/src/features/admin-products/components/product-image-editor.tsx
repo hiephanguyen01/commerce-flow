@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 import { parseApiError } from '@/lib/http/api-error';
 import {
@@ -55,13 +56,17 @@ export function ProductImageEditor({ product }: ProductImageEditorProps) {
 
   const deleteMutation = useDeleteProductImage(product.id);
 
-  const images = imagesQuery.data ?? [];
+  const images = imagesQuery.data;
 
-  const [orderedImages, setOrderedImages] = useState<AdminProductImage[]>([]);
+  const [prevImages, setPrevImages] = useState<AdminProductImage[] | undefined>(images);
+  const [orderedImages, setOrderedImages] = useState<AdminProductImage[]>(images ?? []);
 
-  useEffect(() => {
-    setOrderedImages(images);
-  }, [images]);
+  if (images !== prevImages) {
+    setPrevImages(images);
+    setOrderedImages(images ?? []);
+  }
+
+  const renderImages = images ?? [];
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -201,7 +206,7 @@ export function ProductImageEditor({ product }: ProductImageEditorProps) {
         <div className="mt-6">
           <ImageUploadPanel
             disabled={busy}
-            nextSortOrder={images.length}
+            nextSortOrder={renderImages.length}
             expectedProductVersion={product.version}
             t={t}
             onUpload={async (input) => {
@@ -521,11 +526,13 @@ function SortableImageCard({
 
   const [editing, setEditing] = useState(false);
 
+  const [prevAltText, setPrevAltText] = useState(image.altText);
   const [altText, setAltText] = useState(image.altText ?? '');
 
-  useEffect(() => {
+  if (image.altText !== prevAltText) {
+    setPrevAltText(image.altText);
     setAltText(image.altText ?? '');
-  }, [image.altText]);
+  }
 
   const style = {
     transform: CSS.Transform.toString(transform),

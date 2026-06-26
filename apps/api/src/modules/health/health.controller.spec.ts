@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import { HealthController } from './health.controller.js';
@@ -7,7 +7,7 @@ describe('HealthController', () => {
   let controller: HealthController;
 
   const prismaMock = {
-    $queryRaw: jest.fn<() => Promise<unknown[]>>(),
+    $queryRaw: vi.fn<() => Promise<unknown[]>>(),
   };
 
   beforeEach(async () => {
@@ -27,7 +27,7 @@ describe('HealthController', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('returns liveness status', () => {

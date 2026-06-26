@@ -1,0 +1,3 @@
+-- This migration was generated after the product image metadata columns had
+-- already been added by 20260621170536_improve_product_image_metadata.
+-- Keep it as a no-op so Prisma can deploy the existing migration history.

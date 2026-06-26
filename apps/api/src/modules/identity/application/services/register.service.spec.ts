@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { vi } from 'vitest';
 import type { ConfigService } from '@nestjs/config';
 import { Prisma } from '../../../../generated/prisma/client.js';
 import type { PrismaService } from '../../../../infrastructure/database/prisma.service.js';
@@ -10,21 +10,21 @@ describe(AuthService.name, () => {
   type TransactionClientMock = {
     user: {
       create: ReturnType<
-        typeof jest.fn<
+        typeof vi.fn<
           (args: { data: Record<string, unknown> }) => Promise<typeof user>
         >
       >;
     };
     refreshSession: {
       create: ReturnType<
-        typeof jest.fn<
+        typeof vi.fn<
           (args: { data: Record<string, unknown> }) => Promise<undefined>
         >
       >;
     };
     authAuditLog: {
       create: ReturnType<
-        typeof jest.fn<
+        typeof vi.fn<
           (args: { data: Record<string, unknown> }) => Promise<undefined>
         >
       >;
@@ -39,20 +39,20 @@ describe(AuthService.name, () => {
   };
 
   const passwordService = {
-    hash: jest.fn<(password: string) => Promise<string>>(),
+    hash: vi.fn<(password: string) => Promise<string>>(),
   };
   const tokenService = {
-    createRefreshToken: jest.fn<() => string>(),
-    hashRefreshToken: jest.fn<(token: string) => string>(),
+    createRefreshToken: vi.fn<() => string>(),
+    hashRefreshToken: vi.fn<(token: string) => string>(),
     signAccessToken:
-      jest.fn<(userId: string, sessionId: string) => Promise<string>>(),
-    getAccessTokenTtlSeconds: jest.fn<() => number>(),
-    getRefreshTokenTtlSeconds: jest.fn<() => number>(),
-    getRefreshTokenExpiresAt: jest.fn<() => Date>(),
+      vi.fn<(userId: string, sessionId: string) => Promise<string>>(),
+    getAccessTokenTtlSeconds: vi.fn<() => number>(),
+    getRefreshTokenTtlSeconds: vi.fn<() => number>(),
+    getRefreshTokenExpiresAt: vi.fn<() => Date>(),
   };
   const prisma = {
     $transaction:
-      jest.fn<
+      vi.fn<
         (
           callback: (client: TransactionClientMock) => Promise<unknown>,
         ) => Promise<unknown>
@@ -63,7 +63,7 @@ describe(AuthService.name, () => {
   let service: AuthService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     passwordService.hash.mockResolvedValue('password-hash');
     tokenService.createRefreshToken.mockReturnValue('refresh-token');
     tokenService.hashRefreshToken.mockReturnValue('refresh-token-hash');
@@ -85,19 +85,19 @@ describe(AuthService.name, () => {
   it('creates the user, refresh session, and audit log in one transaction', async () => {
     const tx: TransactionClientMock = {
       user: {
-        create: jest
+        create: vi
           .fn<
             (args: { data: Record<string, unknown> }) => Promise<typeof user>
           >()
           .mockResolvedValue(user),
       },
       refreshSession: {
-        create: jest
+        create: vi
           .fn<(args: { data: Record<string, unknown> }) => Promise<undefined>>()
           .mockResolvedValue(undefined),
       },
       authAuditLog: {
-        create: jest
+        create: vi
           .fn<(args: { data: Record<string, unknown> }) => Promise<undefined>>()
           .mockResolvedValue(undefined),
       },

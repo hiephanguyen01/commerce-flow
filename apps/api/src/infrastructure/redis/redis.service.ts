@@ -18,7 +18,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     private readonly client: Redis,
   ) {}
 
-  onModuleInit(): void {
+  async onModuleInit(): Promise<void> {
     this.client.on('error', (error: Error) => {
       this.logger.warn(`Redis error: ${error.message}`);
     });
@@ -28,7 +28,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     });
 
     if (this.client.status === 'wait') {
-      void this.client.connect().catch((error: unknown) => {
+      await this.client.connect().catch((error: unknown) => {
         this.logger.warn(
           `Redis initial connection failed: ${this.getErrorMessage(error)}`,
         );
