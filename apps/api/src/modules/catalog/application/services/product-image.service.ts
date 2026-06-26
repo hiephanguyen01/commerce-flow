@@ -9,6 +9,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import { Prisma, ProductStatus } from '../../../../generated/prisma/client.js';
 import { PrismaService } from '../../../../infrastructure/database/prisma.service.js';
+import { CatalogCacheService } from '../../infrastructure/cache/catalog-cache.service.js';
 import { ProductImageStorageService } from '../../infrastructure/storage/product-image-storage.service.js';
 import { CreateProductImageDto } from '../dto/image/create-product-image.dto.js';
 import { ReorderProductImagesDto } from '../dto/image/reorder-product-images.dto.js';
@@ -29,6 +30,7 @@ export class ProductImageService {
     private readonly prisma: PrismaService,
     private readonly storage: ProductImageStorageService,
     private readonly fileValidator: ProductImageFileValidator,
+    private readonly catalogCache: CatalogCacheService,
   ) {}
   async upload(
     productId: string,
@@ -48,7 +50,7 @@ export class ProductImageService {
         buffer: validatedFile.buffer,
       });
     try {
-      return await this.prisma.$transaction(
+      const result = await this.prisma.$transaction(
         async (tx) => {
           const product = await this.getProductForMutation(tx, productId);
           this.assertProductCanBeModified(product);
@@ -87,6 +89,8 @@ export class ProductImageService {
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
+      await this.catalogCache.invalidateProducts();
+      return result;
     } catch (error) {
       /* * Database transaction thất bại sau khi object * đã upload. Cố gắng xóa object để tránh orphan. */ await this.cleanupUploadedObject(
         uploadedObject.objectKey,
@@ -126,7 +130,7 @@ export class ProductImageService {
       });
     }
     try {
-      return await this.prisma.$transaction(
+      const result = await this.prisma.$transaction(
         async (tx) => {
           const product = await this.getProductForMutation(tx, productId);
           this.assertProductCanBeModified(product);
@@ -153,6 +157,8 @@ export class ProductImageService {
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
+      await this.catalogCache.invalidateProducts();
+      return result;
     } catch (error) {
       this.rethrowImageWriteError(error);
     }
@@ -163,7 +169,7 @@ export class ProductImageService {
     expectedProductVersion: number,
   ) {
     try {
-      return await this.prisma.$transaction(
+      const result = await this.prisma.$transaction(
         async (tx) => {
           const product = await this.getProductForMutation(tx, productId);
           this.assertProductCanBeModified(product);
@@ -192,13 +198,15 @@ export class ProductImageService {
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
+      await this.catalogCache.invalidateProducts();
+      return result;
     } catch (error) {
       this.rethrowImageWriteError(error);
     }
   }
   async reorder(productId: string, dto: ReorderProductImagesDto) {
     try {
-      return await this.prisma.$transaction(
+      const result = await this.prisma.$transaction(
         async (tx) => {
           const product = await this.getProductForMutation(tx, productId);
           this.assertProductCanBeModified(product);
@@ -250,6 +258,8 @@ export class ProductImageService {
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
+      await this.catalogCache.invalidateProducts();
+      return result;
     } catch (error) {
       this.rethrowImageWriteError(error);
     }
@@ -296,6 +306,8 @@ export class ProductImageService {
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
+      await this.catalogCache.invalidateProducts();
+
       deletedObjectKey = result.objectKey;
       /* * Xóa metadata DB trước rồi mới xóa object. * Không để storage failure rollback database * về URL đã không còn đáng tin cậy. */ try {
         await this.storage.deleteObject(result.objectKey);
@@ -305,6 +317,7 @@ export class ProductImageService {
           error instanceof Error ? error.stack : undefined,
         );
       }
+
       return { productVersion: result.productVersion };
     } catch (error) {
       this.rethrowImageWriteError(error);

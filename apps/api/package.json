@@ -18,6 +18,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "helmet": "^8.2.0",
+    "ioredis": "^5.11.1",
     "joi": "^18.2.3",
     "multer": "^2.2.0",
     "nestjs-pino": "^4.6.1",
@@ -27,7 +28,8 @@
     "pino-http": "^11.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "vitest": "^4.1.9"
   },
   "description": "",
   "devDependencies": {
@@ -45,6 +47,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.20.0",
     "@types/supertest": "^7.0.0",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -68,13 +71,13 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
     "moduleFileExtensions": [
       "js",
       "json",
       "ts"
-    ],
-    "extensionsToTreatAsEsm": [
-      ".ts"
     ],
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
@@ -100,12 +103,14 @@
     "lint": "eslint \"{src,test}/**/*.ts\" --max-warnings=0",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy:test": "dotenv -e .env.test -- prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:validate": "prisma validate",
     "start": "node dist/main",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json",
+    "test:integration": "dotenv -e .env.test -- vitest run --config vitest.integration.config.ts",
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "typecheck": "tsc --noEmit"
   },

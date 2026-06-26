@@ -10,6 +10,7 @@ import {
   ProductVariantStatus,
 } from '../../../../generated/prisma/client.js';
 import { PrismaService } from '../../../../infrastructure/database/prisma.service.js';
+import { CatalogCacheService } from '../../infrastructure/cache/catalog-cache.service.js';
 import {
   AdminProductQueryDto,
   AdminProductSort,
@@ -23,7 +24,11 @@ import { UpdateProductDto } from '../dto/product/update-product.dto.js';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+
+    private readonly catalogCache: CatalogCacheService,
+  ) {}
 
   async create(dto: CreateProductDto) {
     if (dto.categoryId) {
@@ -585,6 +590,166 @@ export class ProductService {
     }
 
     return product;
+  }
+
+  async findPublicProducts(query: PublicProductQueryDto) {
+    return this.catalogCache.getPublicProductList(query, () =>
+      this.loadPublicProducts(query),
+    );
+  }
+
+  private async loadPublicProducts(query: PublicProductQueryDto) {
+    const skip = (query.page - 1) * query.limit;
+
+    const search = query.search?.trim();
+
+    const conditions: Prisma.ProductWhereInput[] = [
+      {
+        status: ProductStatus.PUBLISHED,
+      },
+
+      {
+        variants: {
+          some: {
+            status: ProductVariantStatus.ACTIVE,
+          },
+        },
+      },
+    ];
+
+    if (query.categorySlug) {
+      conditions.push({
+        category: {
+          is: {
+            slug: query.categorySlug,
+
+            isActive: true,
+          },
+        },
+      });
+    } else {
+      conditions.push({
+        OR: [
+          {
+            categoryId: null,
+          },
+
+          {
+            category: {
+              is: {
+                isActive: true,
+              },
+            },
+          },
+        ],
+      });
+    }
+
+    if (search) {
+      conditions.push({
+        OR: [
+          {
+            name: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+
+          {
+            slug: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+
+          {
+            shortDescription: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      });
+    }
+
+    const where: Prisma.ProductWhereInput = {
+      AND: conditions,
+    };
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        where,
+        skip,
+        take: query.limit,
+
+        orderBy: this.getPublicOrderBy(query.sort),
+
+        select: this.getPublicProductListSelect(),
+      }),
+
+      this.prisma.product.count({
+        where,
+      }),
+    ]);
+
+    return {
+      items,
+
+      pagination: {
+        page: query.page,
+        limit: query.limit,
+        total,
+
+        totalPages: total === 0 ? 0 : Math.ceil(total / query.limit),
+      },
+    };
+  }
+  async findPublicProductBySlug(slug: string) {
+    const product = await this.catalogCache.getPublicProductDetail(slug, () =>
+      this.loadPublicProductBySlug(slug),
+    );
+
+    if (!product) {
+      throw new NotFoundException({
+        code: 'PUBLIC_PRODUCT_NOT_FOUND',
+
+        message: 'Product was not found',
+      });
+    }
+
+    return product;
+  }
+
+  private loadPublicProductBySlug(slug: string) {
+    return this.prisma.product.findFirst({
+      where: {
+        slug: slug.trim().toLowerCase(),
+
+        status: ProductStatus.PUBLISHED,
+
+        variants: {
+          some: {
+            status: ProductVariantStatus.ACTIVE,
+          },
+        },
+
+        OR: [
+          {
+            categoryId: null,
+          },
+
+          {
+            category: {
+              is: {
+                isActive: true,
+              },
+            },
+          },
+        ],
+      },
+
+      select: this.getPublicProductDetailSelect(),
+    });
   }
   private getAdminProductListSelect() {
     return {

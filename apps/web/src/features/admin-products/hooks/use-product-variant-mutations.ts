@@ -17,6 +17,7 @@ function sortVariants(variants: AdminProductVariant[]): AdminProductVariant[] {
     (left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
   );
 }
+
 function replaceVariant(
   product: AdminProductDetail | undefined,
   variant: AdminProductVariant,
@@ -44,7 +45,10 @@ function removeVariantFromProduct(
     variants: product.variants.filter((variant) => variant.id !== variantId),
   };
 }
-async function invalidateProductData(queryClient: QueryClient, productId: string): Promise<void> {
+export async function invalidateProductData(
+  queryClient: QueryClient,
+  productId: string,
+): Promise<void> {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: adminProductQueryKeys.lists() }),
     queryClient.invalidateQueries({ queryKey: adminProductQueryKeys.detail(productId) }),

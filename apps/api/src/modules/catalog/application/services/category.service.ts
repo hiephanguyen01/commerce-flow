@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../../../../generated/prisma/client.js';
 import { PrismaService } from '../../../../infrastructure/database/prisma.service.js';
+import { CatalogCacheService } from '../../infrastructure/cache/catalog-cache.service.js';
 import { CategoryQueryDto } from '../dto/category/category-query.dto.js';
 import { CreateCategoryDto } from '../dto/category/create-category.dto.js';
 import { UpdateCategoryDto } from '../dto/category/update-category.dto.js';
@@ -22,7 +23,11 @@ type CategoryParent = Prisma.CategoryGetPayload<{
 
 @Injectable()
 export class CategoryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+
+    private readonly catalogCache: CatalogCacheService,
+  ) {}
 
   async create(dto: CreateCategoryDto) {
     if (dto.parentId) {
@@ -140,8 +145,13 @@ export class CategoryService {
 
     return category;
   }
-
   async findPublicCategories(): Promise<CategoryTreeNode[]> {
+    return this.catalogCache.getPublicCategories(() =>
+      this.loadPublicCategories(),
+    );
+  }
+
+  private async loadPublicCategories(): Promise<CategoryTreeNode[]> {
     const categories = await this.prisma.category.findMany({
       where: {
         isActive: true,
@@ -153,6 +163,9 @@ export class CategoryService {
         },
         {
           name: 'asc',
+        },
+        {
+          id: 'asc',
         },
       ],
 
@@ -191,10 +204,6 @@ export class CategoryService {
 
       const parent = categoryMap.get(category.parentId);
 
-      /*
-       * Nếu parent không active, category con
-       * cũng không xuất hiện ngoài storefront.
-       */
       if (!parent) {
         continue;
       }
@@ -206,118 +215,137 @@ export class CategoryService {
   }
 
   async update(categoryId: string, dto: UpdateCategoryDto) {
-    const current = await this.prisma.category.findUnique({
-      where: {
-        id: categoryId,
+    const category = await this.prisma.$transaction(
+      async () => {
+        const current = await this.prisma.category.findUnique({
+          where: {
+            id: categoryId,
+          },
+
+          select: {
+            id: true,
+          },
+        });
+
+        if (!current) {
+          throw this.categoryNotFound();
+        }
+
+        if (dto.parentId !== undefined) {
+          await this.ensureValidParent(categoryId, dto.parentId);
+        }
+
+        try {
+          return await this.prisma.category.update({
+            where: {
+              id: categoryId,
+            },
+
+            data: {
+              ...(dto.name !== undefined
+                ? {
+                    name: dto.name.trim(),
+                  }
+                : {}),
+
+              ...(dto.slug !== undefined
+                ? {
+                    slug: this.normalizeSlug(dto.slug),
+                  }
+                : {}),
+
+              ...(dto.description !== undefined
+                ? {
+                    description: this.normalizeOptionalText(dto.description),
+                  }
+                : {}),
+
+              ...(dto.parentId !== undefined
+                ? {
+                    parentId: dto.parentId,
+                  }
+                : {}),
+
+              ...(dto.isActive !== undefined
+                ? {
+                    isActive: dto.isActive,
+                  }
+                : {}),
+
+              ...(dto.sortOrder !== undefined
+                ? {
+                    sortOrder: dto.sortOrder,
+                  }
+                : {}),
+            },
+
+            select: this.getAdminCategorySelect(),
+          });
+        } catch (error) {
+          this.handleUniqueConstraint(error);
+
+          throw error;
+        }
       },
-
-      select: {
-        id: true,
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       },
-    });
+    );
 
-    if (!current) {
-      throw this.categoryNotFound();
-    }
-
-    if (dto.parentId !== undefined) {
-      await this.ensureValidParent(categoryId, dto.parentId);
-    }
-
-    try {
-      return await this.prisma.category.update({
-        where: {
-          id: categoryId,
-        },
-
-        data: {
-          ...(dto.name !== undefined
-            ? {
-                name: dto.name.trim(),
-              }
-            : {}),
-
-          ...(dto.slug !== undefined
-            ? {
-                slug: this.normalizeSlug(dto.slug),
-              }
-            : {}),
-
-          ...(dto.description !== undefined
-            ? {
-                description: this.normalizeOptionalText(dto.description),
-              }
-            : {}),
-
-          ...(dto.parentId !== undefined
-            ? {
-                parentId: dto.parentId,
-              }
-            : {}),
-
-          ...(dto.isActive !== undefined
-            ? {
-                isActive: dto.isActive,
-              }
-            : {}),
-
-          ...(dto.sortOrder !== undefined
-            ? {
-                sortOrder: dto.sortOrder,
-              }
-            : {}),
-        },
-
-        select: this.getAdminCategorySelect(),
-      });
-    } catch (error) {
-      this.handleUniqueConstraint(error);
-
-      throw error;
-    }
+    await this.catalogCache.invalidateCategoriesAndProducts();
+    return category;
   }
 
   async remove(categoryId: string): Promise<void> {
-    const category = await this.prisma.category.findUnique({
-      where: {
-        id: categoryId,
-      },
-
-      select: {
-        id: true,
-
-        _count: {
-          select: {
-            children: true,
-            products: true,
+    await this.prisma.$transaction(
+      async () => {
+        const category = await this.prisma.category.findUnique({
+          where: {
+            id: categoryId,
           },
-        },
+
+          select: {
+            id: true,
+
+            _count: {
+              select: {
+                children: true,
+                products: true,
+              },
+            },
+          },
+        });
+
+        if (!category) {
+          throw this.categoryNotFound();
+        }
+
+        if (category._count.children > 0) {
+          throw new ConflictException({
+            code: 'CATEGORY_HAS_CHILDREN',
+            message: 'Category with child categories cannot be deleted',
+          });
+        }
+
+        if (category._count.products > 0) {
+          throw new ConflictException({
+            code: 'CATEGORY_HAS_PRODUCTS',
+            message: 'Category with products cannot be deleted',
+          });
+        }
+
+        await this.prisma.category.delete({
+          where: {
+            id: categoryId,
+          },
+        });
       },
-    });
-
-    if (!category) {
-      throw this.categoryNotFound();
-    }
-
-    if (category._count.children > 0) {
-      throw new ConflictException({
-        code: 'CATEGORY_HAS_CHILDREN',
-        message: 'Category with child categories cannot be deleted',
-      });
-    }
-
-    if (category._count.products > 0) {
-      throw new ConflictException({
-        code: 'CATEGORY_HAS_PRODUCTS',
-        message: 'Category with products cannot be deleted',
-      });
-    }
-
-    await this.prisma.category.delete({
-      where: {
-        id: categoryId,
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       },
-    });
+    );
+
+    await this.catalogCache.invalidateCategoriesAndProducts();
   }
 
   private async ensureValidParent(

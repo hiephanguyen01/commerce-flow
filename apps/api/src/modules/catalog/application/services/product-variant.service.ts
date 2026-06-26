@@ -10,18 +10,22 @@ import {
   ProductVariantStatus,
 } from '../../../../generated/prisma/client.js';
 import { PrismaService } from '../../../../infrastructure/database/prisma.service.js';
+import { CatalogCacheService } from '../../infrastructure/cache/catalog-cache.service.js';
 import { CreateVariantDto } from '../dto/variant/create-variant.dto.js';
 import { UpdateVariantDto } from '../dto/variant/update-variant.dto.js';
 
 @Injectable()
 export class ProductVariantService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly catalogCache: CatalogCacheService,
+  ) {}
 
   async create(productId: string, dto: CreateVariantDto) {
     this.ensureValidPrices(dto.priceAmount, dto.compareAtPrice);
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const result = await this.prisma.$transaction(async (tx) => {
         await this.ensureMutableProductExists(tx, productId);
 
         return tx.productVariant.create({
@@ -38,6 +42,9 @@ export class ProductVariantService {
           select: this.getAdminVariantSelect(),
         });
       });
+      await this.catalogCache.invalidateProducts();
+
+      return result;
     } catch (error) {
       this.rethrowVariantWriteError(error);
     }
@@ -85,7 +92,7 @@ export class ProductVariantService {
     const { expectedVersion, ...changes } = dto;
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const result = await this.prisma.$transaction(async (tx) => {
         const current = await this.findMutableVariant(tx, productId, variantId);
 
         const priceAmount = changes.priceAmount ?? current.priceAmount;
@@ -155,6 +162,9 @@ export class ProductVariantService {
           select: this.getAdminVariantSelect(),
         });
       });
+      await this.catalogCache.invalidateProducts();
+
+      return result;
     } catch (error) {
       this.rethrowVariantWriteError(error);
     }
@@ -165,13 +175,15 @@ export class ProductVariantService {
     variantId: string,
     expectedVersion: number,
   ) {
-    return this.changeStatus(
+    const result = await this.changeStatus(
       productId,
       variantId,
       expectedVersion,
       ProductVariantStatus.INACTIVE,
       ProductVariantStatus.ACTIVE,
     );
+    await this.catalogCache.invalidateProducts();
+    return result;
   }
 
   async deactivate(
@@ -179,13 +191,15 @@ export class ProductVariantService {
     variantId: string,
     expectedVersion: number,
   ) {
-    return this.changeStatus(
+    const result = await this.changeStatus(
       productId,
       variantId,
       expectedVersion,
       ProductVariantStatus.ACTIVE,
       ProductVariantStatus.INACTIVE,
     );
+    await this.catalogCache.invalidateProducts();
+    return result;
   }
 
   async remove(
@@ -194,7 +208,7 @@ export class ProductVariantService {
     expectedVersion: number,
   ): Promise<void> {
     try {
-      await this.prisma.$transaction(async (tx) => {
+      const result = await this.prisma.$transaction(async (tx) => {
         const variant = await this.findMutableVariant(tx, productId, variantId);
 
         if (variant.version !== expectedVersion) {
@@ -221,6 +235,8 @@ export class ProductVariantService {
           throw this.versionConflict();
         }
       });
+      await this.catalogCache.invalidateProducts();
+      return result;
     } catch (error) {
       this.rethrowVariantWriteError(error);
     }

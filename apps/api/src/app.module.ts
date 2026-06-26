@@ -10,6 +10,7 @@ import { PrismaModule } from './infrastructure/database/prisma.module.js';
 import { CatalogModule } from './modules/catalog/catalog.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { IdentityModule } from './modules/identity/identity.module.js';
+import { RedisModule } from './infrastructure/redis/redis.module.js';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { IdentityModule } from './modules/identity/identity.module.js';
     IdentityModule,
     PrismaModule,
     HealthModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [

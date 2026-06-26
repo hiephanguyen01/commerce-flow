@@ -30,6 +30,25 @@ export const environmentSchema = Joi.object({
 
   MINIO_AUTO_CREATE_BUCKET: Joi.boolean().default(false),
 
+  CATALOG_CACHE_ENABLED: Joi.boolean().default(true),
+
+  CATALOG_CATEGORY_CACHE_TTL_SECONDS: Joi.number()
+    .integer()
+    .positive()
+    .default(300),
+
+  CATALOG_PRODUCT_LIST_CACHE_TTL_SECONDS: Joi.number()
+    .integer()
+    .positive()
+    .default(60),
+
+  CATALOG_PRODUCT_DETAIL_CACHE_TTL_SECONDS: Joi.number()
+    .integer()
+    .positive()
+    .default(300),
+
+  CATALOG_CACHE_LOCK_TTL_MS: Joi.number().integer().positive().default(5000),
+
   PRODUCT_IMAGE_MAX_SIZE_BYTES: Joi.number()
     .integer()
     .positive()

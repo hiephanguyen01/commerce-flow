@@ -15,7 +15,14 @@ const nextConfig: NextConfig = {
         port: '9000',
         pathname: '/commerce-flow-products/**',
       },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '9000',
+        pathname: '/commerce-flow-products/**',
+      },
     ],
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production',
   },
   turbopack: {
     root: fileURLToPath(new URL('../..', import.meta.url)),
