@@ -21,7 +21,6 @@ export async function requireAdmin(locale: string): Promise<RequiredAdminUser> {
   const serverApi = createServerApi({ accessToken });
   try {
     const { data } = await serverApi.get<CurrentUserResponse>('/api/v1/auth/me');
-    console.log("🚀 ~ requireAdmin ~ data:", data)
     if (data.user.role !== 'ADMIN') {
       redirect(`/${locale}/admin/forbidden`);
     }

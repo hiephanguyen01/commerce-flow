@@ -147,10 +147,7 @@ export function RegisterForm({ locale }: RegisterFormProps) {
 
       <p className="mt-7 text-center text-sm text-slate-500">
         {t('alreadyRegistered')}{' '}
-        <Link
-          href={`/login`}
-          className="font-semibold text-indigo-600 hover:text-indigo-500"
-        >
+        <Link href={`/login`} className="font-semibold text-indigo-600 hover:text-indigo-500">
           {t('login')}
         </Link>
       </p>

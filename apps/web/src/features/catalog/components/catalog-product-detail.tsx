@@ -275,7 +275,6 @@ function VariantOption({
   );
 }
 
-
 function ProductDetailSkeleton() {
   return (
     <main className="mx-auto max-w-7xl px-5 py-10 sm:px-8">

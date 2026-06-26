@@ -137,7 +137,6 @@ export type AdminProductImage = {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
-  
 };
 
 export type ProductImageMutationResponse = {

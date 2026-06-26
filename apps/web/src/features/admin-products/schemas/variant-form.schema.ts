@@ -56,7 +56,9 @@ export function createVariantFormSchema(t: TranslationFunction) {
         });
       }
 
-      const normalizedKeys = value.attributes.map((attribute) => attribute.key.trim().toLowerCase());
+      const normalizedKeys = value.attributes.map((attribute) =>
+        attribute.key.trim().toLowerCase(),
+      );
 
       if (new Set(normalizedKeys).size !== normalizedKeys.length) {
         context.addIssue({

@@ -181,7 +181,10 @@ export function VariantForm({
           />
         </Field>
 
-        <Field label={t('compareAtPriceLabel')} error={form.formState.errors.compareAtPrice?.message}>
+        <Field
+          label={t('compareAtPriceLabel')}
+          error={form.formState.errors.compareAtPrice?.message}
+        >
           <Controller
             control={form.control}
             name="compareAtPrice"

@@ -314,11 +314,7 @@ function VariantCard({
             type="button"
             onClick={onDelete}
             disabled={disabled || cannotDeleteActivePublished}
-            title={
-              cannotDeleteActivePublished
-                ? t('deactivateBeforeDeleteTitle')
-                : undefined
-            }
+            title={cannotDeleteActivePublished ? t('deactivateBeforeDeleteTitle') : undefined}
             className="h-10 rounded-lg border border-red-200 px-4 text-sm font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {t('delete')}
@@ -337,11 +333,7 @@ function formatVnd(amount: number, locale: string): string {
   }).format(amount);
 }
 
-function getActionErrorMessage(
-  code: string,
-  fallback: string,
-  t: ProductsTranslator,
-): string {
+function getActionErrorMessage(code: string, fallback: string, t: ProductsTranslator): string {
   switch (code) {
     case 'PUBLISHED_PRODUCT_REQUIRES_ACTIVE_VARIANT':
       return t('publishedProductRequiresActiveVariant');

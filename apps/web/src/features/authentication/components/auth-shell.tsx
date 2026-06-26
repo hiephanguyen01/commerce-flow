@@ -36,13 +36,9 @@ export function AuthShell({ children }: AuthShellProps) {
               {t('eyebrow')}
             </p>
 
-            <h1 className="text-5xl font-semibold leading-tight tracking-tight">
-              {t('title')}
-            </h1>
+            <h1 className="text-5xl font-semibold leading-tight tracking-tight">{t('title')}</h1>
 
-            <p className="mt-6 max-w-lg text-lg leading-8 text-slate-300">
-              {t('description')}
-            </p>
+            <p className="mt-6 max-w-lg text-lg leading-8 text-slate-300">{t('description')}</p>
 
             <div className="mt-10 grid max-w-lg grid-cols-3 gap-4">
               <FeatureMetric value={t('secureValue')} label={t('secureLabel')} />
