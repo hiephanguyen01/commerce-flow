@@ -18,6 +18,8 @@ enum UserStatus {
   DISABLED
 }
 
+
+
 enum SessionRevocationReason {
   ROTATED
   LOGOUT
@@ -185,6 +187,7 @@ model ProductVariant {
   updatedAt      DateTime             @updatedAt @map("updated_at")
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  inventoryItems InventoryItem[]
 
   @@index([productId, status])
   @@index([productId, sortOrder])
@@ -212,4 +215,203 @@ model ProductImage {
   @@map("product_images")
 }
 
+
+
+enum WarehouseStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum InventoryReservationStatus {
+  ACTIVE
+  RELEASED
+  COMMITTED
+  EXPIRED
+}
+
+enum InventoryMovementType {
+  STOCK_RECEIVED
+  STOCK_ADJUSTED
+  RESERVATION_CREATED
+  RESERVATION_RELEASED
+  RESERVATION_COMMITTED
+  RESERVATION_EXPIRED
+}
+
+// model Warehouse {
+//   id     String @id @default(uuid()) @db.Uuid
+//   code   String @unique @db.VarChar(50)
+//   name   String @db.VarChar(160)
+//   status WarehouseStatus @default(ACTIVE)
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   inventoryItems InventoryItem[]
+
+//   @@index([status])
+//   @@map("warehouses")
+// }
+
+// model InventoryItem {
+//   id String @id @default(uuid()) @db.Uuid
+
+//   warehouseId String @map("warehouse_id") @db.Uuid
+//   variantId   String @map("variant_id") @db.Uuid
+
+//   onHand   Int @default(0) @map("on_hand")
+//   reserved Int @default(0)
+//   version  Int @default(1)
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   warehouse Warehouse @relation( fields: [warehouseId], references: [id],onDelete: Restrict)
+
+//   variant ProductVariant @relation(fields: [variantId],references: [id],onDelete: Restrict  )
+
+//   reservations InventoryReservation[]
+//   movements    InventoryMovement[]
+
+//   @@unique([warehouseId, variantId],map: "inventory_items_warehouse_variant_key")
+
+//   @@index([variantId])
+//   @@index([warehouseId])
+//   @@map("inventory_items")
+// }
+
+// model InventoryReservation {
+//   id String @id @default(uuid()) @db.Uuid
+
+//   inventoryItemId String @map("inventory_item_id") @db.Uuid
+
+//   quantity Int
+
+//   status InventoryReservationStatus @default(ACTIVE)
+
+//   idempotencyKey String @unique @map("idempotency_key") @db.VarChar(120)
+
+//   referenceId String? @map("reference_id") @db.VarChar(120)
+
+//   expiresAt   DateTime @map("expires_at")
+//   releasedAt  DateTime? @map("released_at")
+//   committedAt DateTime? @map("committed_at")
+//   expiredAt   DateTime? @map("expired_at")
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   inventoryItem InventoryItem @relation(fields: [inventoryItemId],references: [id],onDelete: Restrict)
+
+//   movements InventoryMovement[]
+
+//   @@index([status, expiresAt])
+//   @@index([inventoryItemId, status])
+//   @@index([referenceId])
+//   @@map("inventory_reservations")
+// }
+model InventoryMovement {
+  id String @id @default(uuid()) @db.Uuid
+
+  inventoryItemId String  @map("inventory_item_id") @db.Uuid
+  reservationId   String? @map("reservation_id") @db.Uuid
+
+  type InventoryMovementType
+
+  deltaOnHand   Int @map("delta_on_hand")
+  deltaReserved Int @map("delta_reserved")
+
+  balanceOnHandAfter     Int @map("balance_on_hand_after")
+  balanceReservedAfter   Int @map("balance_reserved_after")
+
+  idempotencyKey String? @unique @map("idempotency_key") @db.VarChar(120)
+  referenceId    String? @map("reference_id") @db.VarChar(120)
+  note           String? @db.VarChar(500)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId],references: [id],onDelete: Restrict)
+
+  reservation InventoryReservation? @relation(fields: [reservationId],references: [id],onDelete: Restrict)
+
+  @@unique([reservationId, type],map: "inventory_movements_reservation_type_key")
+
+  @@index([inventoryItemId, createdAt])
+  @@index([reservationId])
+  @@index([referenceId])
+  @@map("inventory_movements")
+}
+
+model Warehouse {
+  id     String @id @default(uuid()) @db.Uuid
+  code   String @unique @db.VarChar(50)
+  name   String @db.VarChar(160)
+  status WarehouseStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  inventoryItems InventoryItem[]
+
+  @@index([status])
+  @@map("warehouses")
+}
+
+model InventoryItem {
+  id String @id @default(uuid()) @db.Uuid
+
+  warehouseId String @map("warehouse_id") @db.Uuid
+  variantId   String @map("variant_id") @db.Uuid
+
+  onHand   Int @default(0) @map("on_hand")
+  reserved Int @default(0)
+  version  Int @default(1)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  warehouse Warehouse @relation(fields: [warehouseId],references: [id],onDelete: Restrict)
+
+  variant ProductVariant @relation(fields: [variantId],references: [id],onDelete: Restrict)
+
+  reservations InventoryReservation[]
+  movements    InventoryMovement[]
+
+  @@unique([warehouseId, variantId],map: "inventory_items_warehouse_variant_key")
+
+  @@index([variantId])
+  @@index([warehouseId])
+  @@map("inventory_items")
+}
+
+model InventoryReservation {
+  id String @id @default(uuid()) @db.Uuid
+
+  inventoryItemId String @map("inventory_item_id") @db.Uuid
+
+  quantity Int
+
+  status InventoryReservationStatus @default(ACTIVE)
+
+  idempotencyKey String @unique @map("idempotency_key") @db.VarChar(120)
+
+  referenceId String? @map("reference_id") @db.VarChar(120)
+
+  expiresAt   DateTime @map("expires_at")
+  releasedAt  DateTime? @map("released_at")
+  committedAt DateTime? @map("committed_at")
+  expiredAt   DateTime? @map("expired_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id],onDelete: Restrict)
+
+  movements InventoryMovement[]
+
+  @@index([status, expiresAt])
+  @@index([inventoryItemId, status])
+  @@index([referenceId])
+  @@map("inventory_reservations")
+}
 

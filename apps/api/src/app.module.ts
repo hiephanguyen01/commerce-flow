@@ -11,6 +11,7 @@ import { CatalogModule } from './modules/catalog/catalog.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { IdentityModule } from './modules/identity/identity.module.js';
 import { RedisModule } from './infrastructure/redis/redis.module.js';
+import { InventoryModule } from './modules/inventory/inventory.module.js';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { RedisModule } from './infrastructure/redis/redis.module.js';
     PrismaModule,
     HealthModule,
     RedisModule,
+    InventoryModule,
   ],
   controllers: [AppController],
   providers: [

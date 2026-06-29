@@ -53,4 +53,18 @@ export const environmentSchema = Joi.object({
     .integer()
     .positive()
     .default(5 * 1024 * 1024),
+
+  INVENTORY_EXPIRATION_WORKER_ENABLED: Joi.boolean().default(true),
+
+  INVENTORY_EXPIRATION_BATCH_SIZE: Joi.number()
+    .integer()
+    .min(1)
+    .max(500)
+    .default(100),
+
+  INVENTORY_EXPIRATION_MAX_BATCHES_PER_RUN: Joi.number()
+    .integer()
+    .min(1)
+    .max(100)
+    .default(10),
 });
