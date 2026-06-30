@@ -5,6 +5,8 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { AdjustInventoryDto } from '../dto/adjust-inventory.dto.js';
+
 import { randomUUID } from 'node:crypto';
 import {
   InventoryMovementType,
@@ -17,6 +19,7 @@ import { PrismaService } from '../../../../infrastructure/database/prisma.servic
 import { CreateWarehouseDto } from '../dto/create-warehouse.dto.js';
 import { ReceiveStockDto } from '../dto/receive-stock.dto.js';
 import { ReserveStockDto } from '../dto/reserve-stock.dto.js';
+import { UpdateWarehouseStatusDto } from '../dto/update-warehouse-status.dto.js';
 
 type InventoryBalanceRow = {
   id: string;
@@ -52,6 +55,7 @@ export class InventoryService {
           id: true,
           code: true,
           name: true,
+          version: true,
           status: true,
           createdAt: true,
           updatedAt: true,
@@ -1105,6 +1109,409 @@ export class InventoryService {
   private sleep(milliseconds: number): Promise<void> {
     return new Promise((resolve) => {
       setTimeout(resolve, milliseconds);
+    });
+  }
+  async adjustInventory(dto: AdjustInventoryDto) {
+    try {
+      return await this.executeSerializable(async (tx) => {
+        const existingMovement = await tx.inventoryMovement.findUnique({
+          where: {
+            idempotencyKey: dto.idempotencyKey,
+          },
+
+          select: this.getMovementSelect(),
+        });
+
+        if (existingMovement) {
+          this.assertAdjustmentIdempotency(existingMovement, dto);
+
+          return {
+            movement: existingMovement,
+
+            inventory: {
+              id: existingMovement.inventoryItem.id,
+
+              warehouseId: existingMovement.inventoryItem.warehouseId,
+
+              variantId: existingMovement.inventoryItem.variantId,
+
+              onHand: existingMovement.balanceOnHandAfter,
+
+              reserved: existingMovement.balanceReservedAfter,
+
+              available:
+                existingMovement.balanceOnHandAfter -
+                existingMovement.balanceReservedAfter,
+
+              version: existingMovement.inventoryItem.version,
+            },
+
+            idempotentReplay: true,
+          };
+        }
+
+        const item = await tx.inventoryItem.findUnique({
+          where: {
+            warehouseId_variantId: {
+              warehouseId: dto.warehouseId,
+
+              variantId: dto.variantId,
+            },
+          },
+
+          select: {
+            id: true,
+            onHand: true,
+            reserved: true,
+            version: true,
+          },
+        });
+
+        if (!item) {
+          throw new NotFoundException({
+            code: 'INVENTORY_ITEM_NOT_FOUND',
+
+            message: 'Inventory item was not found',
+          });
+        }
+
+        if (item.version !== dto.expectedVersion) {
+          throw this.inventoryVersionConflict(item.version);
+        }
+
+        /*
+         * Atomic update:
+         *
+         * 1. expected version phải khớp.
+         * 2. onHand mới không được âm.
+         * 3. onHand mới không được thấp hơn reserved.
+         */
+        const rows = await tx.$queryRaw<InventoryBalanceRow[]>`
+            UPDATE "inventory_items"
+
+            SET
+              "on_hand" =
+                "on_hand" +
+                ${dto.quantityDelta},
+
+              "version" =
+                "version" + 1,
+
+              "updated_at" = NOW()
+
+            WHERE
+              "id" = ${item.id}::uuid
+
+              AND "version" =
+                ${dto.expectedVersion}
+
+              AND (
+                "on_hand" +
+                ${dto.quantityDelta}
+              ) >= 0
+
+              AND (
+                "on_hand" +
+                ${dto.quantityDelta}
+              ) >= "reserved"
+
+            RETURNING
+              "id",
+
+              "warehouse_id"
+                AS "warehouseId",
+
+              "variant_id"
+                AS "variantId",
+
+              "on_hand"
+                AS "onHand",
+
+              "reserved",
+
+              (
+                "on_hand" -
+                "reserved"
+              ) AS "available",
+
+              "version",
+
+              "created_at"
+                AS "createdAt",
+
+              "updated_at"
+                AS "updatedAt"
+          `;
+
+        const inventory = rows[0];
+
+        if (!inventory) {
+          const current = await tx.inventoryItem.findUnique({
+            where: {
+              id: item.id,
+            },
+
+            select: {
+              onHand: true,
+              reserved: true,
+              version: true,
+            },
+          });
+
+          if (!current) {
+            throw new NotFoundException({
+              code: 'INVENTORY_ITEM_NOT_FOUND',
+
+              message: 'Inventory item was not found',
+            });
+          }
+
+          if (current.version !== dto.expectedVersion) {
+            throw this.inventoryVersionConflict(current.version);
+          }
+
+          const resultingOnHand = current.onHand + dto.quantityDelta;
+
+          if (resultingOnHand < current.reserved) {
+            throw new UnprocessableEntityException({
+              code: 'INVENTORY_ADJUSTMENT_BELOW_RESERVED',
+
+              message:
+                'Inventory adjustment would reduce on-hand stock below reserved stock',
+
+              details: {
+                onHand: current.onHand,
+
+                reserved: current.reserved,
+
+                quantityDelta: dto.quantityDelta,
+
+                resultingOnHand,
+              },
+            });
+          }
+
+          throw new ConflictException({
+            code: 'INVENTORY_ADJUSTMENT_REJECTED',
+
+            message: 'Inventory adjustment could not be applied',
+          });
+        }
+
+        const movement = await tx.inventoryMovement.create({
+          data: {
+            inventoryItemId: inventory.id,
+
+            type: InventoryMovementType.STOCK_ADJUSTED,
+
+            deltaOnHand: dto.quantityDelta,
+
+            deltaReserved: 0,
+
+            balanceOnHandAfter: inventory.onHand,
+
+            balanceReservedAfter: inventory.reserved,
+
+            idempotencyKey: dto.idempotencyKey,
+
+            referenceId: this.normalizeOptionalText(dto.referenceId),
+
+            note: dto.reason.trim(),
+          },
+
+          select: this.getMovementSelect(),
+        });
+
+        return {
+          inventory,
+          movement,
+          idempotentReplay: false,
+        };
+      });
+    } catch (error) {
+      /*
+       * Hai request cùng key có thể cùng đọc thấy
+       * movement chưa tồn tại. Unique constraint sẽ
+       * rollback một transaction.
+       */
+      if (this.isUniqueError(error)) {
+        const existing = await this.prisma.inventoryMovement.findUnique({
+          where: {
+            idempotencyKey: dto.idempotencyKey,
+          },
+
+          select: this.getMovementSelect(),
+        });
+
+        if (existing) {
+          this.assertAdjustmentIdempotency(existing, dto);
+
+          return {
+            movement: existing,
+
+            inventory: {
+              id: existing.inventoryItem.id,
+
+              warehouseId: existing.inventoryItem.warehouseId,
+
+              variantId: existing.inventoryItem.variantId,
+
+              onHand: existing.balanceOnHandAfter,
+
+              reserved: existing.balanceReservedAfter,
+
+              available:
+                existing.balanceOnHandAfter - existing.balanceReservedAfter,
+
+              version: existing.inventoryItem.version,
+            },
+
+            idempotentReplay: true,
+          };
+        }
+      }
+
+      this.rethrowInventoryError(error);
+    }
+  }
+
+  async updateWarehouseStatus(
+    warehouseId: string,
+    dto: UpdateWarehouseStatusDto,
+  ) {
+    try {
+      return await this.executeSerializable(async (tx) => {
+        const warehouse = await tx.warehouse.findUnique({
+          where: {
+            id: warehouseId,
+          },
+
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            status: true,
+            version: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
+
+        if (!warehouse) {
+          throw new NotFoundException({
+            code: 'WAREHOUSE_NOT_FOUND',
+
+            message: 'Warehouse was not found',
+          });
+        }
+
+        if (warehouse.version !== dto.expectedVersion) {
+          throw new ConflictException({
+            code: 'WAREHOUSE_VERSION_CONFLICT',
+
+            message: 'Warehouse was modified by another request',
+
+            details: {
+              currentVersion: warehouse.version,
+            },
+          });
+        }
+
+        /*
+         * Idempotent: status không thay đổi thì không
+         * tăng warehouse version.
+         */
+        if (warehouse.status === dto.status) {
+          return warehouse;
+        }
+
+        const updated = await tx.warehouse.updateMany({
+          where: {
+            id: warehouseId,
+            version: dto.expectedVersion,
+          },
+
+          data: {
+            status: dto.status,
+
+            version: {
+              increment: 1,
+            },
+          },
+        });
+
+        if (updated.count !== 1) {
+          throw new ConflictException({
+            code: 'WAREHOUSE_VERSION_CONFLICT',
+
+            message: 'Warehouse was modified by another request',
+          });
+        }
+
+        return tx.warehouse.findUniqueOrThrow({
+          where: {
+            id: warehouseId,
+          },
+
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            status: true,
+            version: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
+      });
+    } catch (error) {
+      this.rethrowInventoryError(error);
+    }
+  }
+
+  private assertAdjustmentIdempotency(
+    movement: {
+      type: InventoryMovementType;
+      deltaOnHand: number;
+      note: string | null;
+
+      inventoryItem: {
+        warehouseId: string;
+        variantId: string;
+      };
+    },
+    dto: AdjustInventoryDto,
+  ): void {
+    const sameRequest =
+      movement.type === InventoryMovementType.STOCK_ADJUSTED &&
+      movement.deltaOnHand === dto.quantityDelta &&
+      movement.inventoryItem.warehouseId === dto.warehouseId &&
+      movement.inventoryItem.variantId === dto.variantId &&
+      movement.note === dto.reason.trim();
+
+    if (!sameRequest) {
+      throw new ConflictException({
+        code: 'IDEMPOTENCY_KEY_REUSED',
+
+        message:
+          'Idempotency key was already used for another inventory operation',
+      });
+    }
+  }
+
+  private inventoryVersionConflict(currentVersion?: number): ConflictException {
+    return new ConflictException({
+      code: 'INVENTORY_VERSION_CONFLICT',
+
+      message: 'Inventory was modified by another request',
+
+      ...(currentVersion !== undefined
+        ? {
+            details: {
+              currentVersion,
+            },
+          }
+        : {}),
     });
   }
 }

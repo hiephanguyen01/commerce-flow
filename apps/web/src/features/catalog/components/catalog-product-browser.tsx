@@ -29,6 +29,7 @@ export function CatalogProductBrowser({ locale, initialCategorySlug }: CatalogPr
   const productsQuery = usePublicProducts(filters);
   const categoriesQuery = usePublicCategories();
   const categories = flattenCategories(categoriesQuery.data ?? []);
+  
   function updateFilters(updates: Record<string, string | null>): void {
     const next = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(updates)) {

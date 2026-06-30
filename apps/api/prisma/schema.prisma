@@ -347,6 +347,7 @@ model Warehouse {
   code   String @unique @db.VarChar(50)
   name   String @db.VarChar(160)
   status WarehouseStatus @default(ACTIVE)
+  version Int @default(1)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -413,5 +414,42 @@ model InventoryReservation {
   @@index([inventoryItemId, status])
   @@index([referenceId])
   @@map("inventory_reservations")
+}
+
+enum InventoryReservationGroupStatus {
+  ACTIVE
+  RELEASED
+  COMMITTED
+  EXPIRED
+}
+
+model InventoryReservationGroup {
+  id String @id @default(uuid()) @db.Uuid
+
+  status InventoryReservationGroupStatus @default(ACTIVE)
+
+  idempotencyKey String @unique @map("idempotency_key") @db.VarChar(120)
+
+  requestHash String @map("request_hash") @db.VarChar(64)
+
+  referenceId String? @map("reference_id") @db.VarChar(120)
+
+  expiresAt DateTime @map("expires_at")
+
+  releasedAt DateTime? @map("released_at")
+
+  committedAt DateTime? @map("committed_at")
+
+  expiredAt DateTime? @map("expired_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  updatedAt DateTime @updatedAt @map("updated_at") 
+  
+  reservations InventoryReservation[]
+
+  @@index([referenceId])
+  @@index([status, expiresAt])
+  @@map("inventory_reservation_groups")
 }
 

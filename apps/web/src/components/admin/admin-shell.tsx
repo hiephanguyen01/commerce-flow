@@ -27,6 +27,10 @@ export function AdminShell({ locale, user, children }: AdminShellProps) {
       label: t('categories'),
       href: `/${locale}/admin/categories`,
     },
+    {
+      label: 'Tồn kho',
+      href: `/${locale}/admin/inventory`,
+    },
   ];
 
   return (
